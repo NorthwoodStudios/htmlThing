@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Horizon Bot - Dashboard</title>
+  <style>
+    /* Reset & base */
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #f0f4f8;
+      height: 100vh;
+    }
+    .Nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 30px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .pfp {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-right: 12px;
+      border: 2px solid #65aadd;
+      box-shadow: 0 0 10px #65aadd88;
+    }
+    .UserTag {
+      font-size: 22px;
+      font-weight: 600;
+      color: #aad4ff;
+      text-shadow: 0 0 6px #65aaddbb;
+      margin-right: 15px;
+    }
+    #authButtons {
+      display: flex;
+      gap: 15px;
+    }
+    .btn {
+      background-color: #65aadd;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 25px;
+      font-size: 18px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 10px #65aaddaa;
+    }
+    .btn:hover {
+      background-color: #4e8ecc;
+      box-shadow: 0 0 20px #4e8ecccc;
+    }
+    .btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <nav class="Nav">
+    <div class="user-info hidden" id="userInfo">
+      <img class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="User Profile Picture" />
+      <h3 class="UserTag">Welcome User</h3>
+    </div>
+
+    <div id="authButtons">
+      <button class="btn" id="loginBtn">Login</button>
+      <button class="btn" id="dashboardBtn" onclick="window.location.href='LoginPage.html'">Dashboard</button>
+    </div>
+  </nav>
+
+  <script>
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userInfo = document.getElementById("userInfo");
+    const userTag = userInfo.querySelector(".UserTag");
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (isLoggedIn) {
+      userInfo.classList.remove("hidden");
+      const username = localStorage.getItem('username') || "User";
+      userTag.textContent = `Welcome, ${username}`;
+
+      // Change login button to logout
+      loginBtn.textContent = 'Logout';
+      loginBtn.onclick = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        window.location.reload();
+      };
+    } else {
+      userInfo.classList.add("hidden");
+
+      // Login button behavior
+      loginBtn.textContent = 'Login';
+      loginBtn.onclick = () => {
+        window.location.href = 'LoginPage.html';
+      };
+    }
+  </script>
+</body>
+</html>
