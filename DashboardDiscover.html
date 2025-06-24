@@ -163,7 +163,7 @@
     // Owner is as per guild.owner = true
     // We'll only show servers where user is owner or staff
     const userRoles = {
-      '1': 'Administrator', // owner
+      '1': 'Administrator',// owner
       '4': 'Staff'
       // guild 2 & 3 user is not staff or owner, so excluded
     };
@@ -183,7 +183,7 @@
         const card = document.createElement('div');
         card.className = 'server-card';
         card.onclick = () => {
-          alert(`You selected "${guild.name}" - role: ${userRoles[guild.id]}`);
+          window.location.href = "Dashboard.html"
           // Here you would redirect or load server dashboard etc.
           // Example: window.location.href = `serverDashboard.html?guild=${guild.id}`;
         };
