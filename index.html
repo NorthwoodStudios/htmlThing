@@ -15,7 +15,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch; /* stretch full width */
     }
     .Nav {
       width: 100%;
@@ -88,16 +88,17 @@
       color: #aad4ff;
       text-shadow: 0 0 8px #65aaddcc;
       user-select: none;
+      text-align: center;
     }
-    /* Container for the cards */
+    /* Container for the cards - full width with padding */
     .bot-info-container {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: space-around; /* spread cards evenly */
       gap: 25px;
-      max-width: 900px;
-      margin-bottom: 50px;
-      padding: 0 15px;
+      width: 100%;
+      padding: 0 40px 50px 40px;
+      box-sizing: border-box;
     }
     /* Individual card styling */
     .bot-card {
@@ -105,11 +106,12 @@
       border-radius: 15px;
       box-shadow: 0 0 15px #65aadd88;
       padding: 25px 30px;
-      width: 280px;
+      width: 280px; /* fixed width for consistent size */
       color: #aad4ff;
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: default;
       user-select: none;
+      flex-shrink: 0; /* prevent shrinking on smaller screens */
     }
     .bot-card:hover {
       transform: translateY(-10px) scale(1.05);
@@ -152,6 +154,18 @@
     }
     .bot-card ul::-webkit-scrollbar-track {
       background: transparent;
+    }
+    @media (max-width: 960px) {
+      /* For smaller screens, center cards */
+      .bot-info-container {
+        justify-content: center;
+        padding: 0 20px 50px 20px;
+      }
+    }
+    @media (max-width: 320px) {
+      .bot-card {
+        width: 90vw;
+      }
     }
   </style>
 </head>
