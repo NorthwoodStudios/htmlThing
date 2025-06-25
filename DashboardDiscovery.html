@@ -3,125 +3,244 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Discovery</title>
+  <title>Horizon Bot - Dashboard Discovery</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
-      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #f0f4f8;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    .guild {
-      background: #222;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 6px;
+    nav.Nav {
+      background: rgba(255,255,255,0.05);
+      padding: 20px 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    .btn {
+      background-color: #65aadd;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 25px;
+      font-size: 18px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #4e8ecc;
+    }
+    .user-info {
       display: flex;
       align-items: center;
+      color: #aad4ff;
     }
-    .guild-icon {
+    .pfp {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      border: 2px solid #65aadd;
+      box-shadow: 0 0 10px #65aadd88;
+    }
+    main {
+      flex-grow: 1;
+      padding: 30px;
+    }
+    h1 {
+      margin-top: 0;
+      color: #aad4ff;
+      text-shadow: 0 0 8px #65aaddcc;
+    }
+    .server-list {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .server-card {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 15px 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #65aadd88;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .server-card:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    .server-icon {
       width: 50px;
       height: 50px;
       border-radius: 12px;
-      margin-right: 12px;
-      background: #333;
+      margin-right: 15px;
+      background-color: #2c5364;
       display: flex;
       justify-content: center;
       align-items: center;
       font-size: 24px;
-      color: #aaa;
+      color: #aad4ff;
+      box-shadow: 0 0 8px #65aaddbb;
       overflow: hidden;
     }
-    .guild-icon img {
+    .server-icon img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
       border-radius: 12px;
+      object-fit: cover;
+    }
+    .server-info {
+      flex-grow: 1;
+    }
+    .server-name {
+      font-weight: 700;
+      font-size: 20px;
+      margin: 0;
+      color: #aad4ff;
+    }
+    .server-role {
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #65aadd;
+      text-shadow: 0 0 5px #65aaddbb;
+    }
+    .no-servers {
+      font-style: italic;
+      color: #7a8b9c;
+      margin-top: 40px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Dashboard Discovery</h1>
-  <div id="content">Loading...</div>
+  <nav class="Nav">
+    <div class="user-info" id="userInfo">
+      <img class="pfp" id="pfp" src="" alt="User Profile" />
+      <h3 id="usernameDisplay">Welcome, User</h3>
+    </div>
+    <button class="btn" id="logoutBtn">Logout</button>
+  </nav>
+
+  <main>
+    <h1>Select a Server</h1>
+    <div class="server-list" id="serverList">
+      <!-- Servers will appear here -->
+    </div>
+    <p class="no-servers" id="noServersMsg" style="display: none;">No servers available to manage.</p>
+  </main>
 
   <script>
-    const BACKEND_URL = 'https://backend-js-3uce.onrender.com'; // Change this to your backend URL in production
+    const BACKEND_URL = 'https://backend-js-3uce.onrender.com'; // Replace with your backend URL
 
-    // Helper to get query param
     function getQueryParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
 
     async function fetchSessionData(sessionToken) {
-      try {
-        const res = await fetch(`${BACKEND_URL}/session/${sessionToken}`);
-        if (!res.ok) throw new Error('Session not found or expired');
-        return await res.json();
-      } catch (err) {
-        throw err;
-      }
+      const res = await fetch(`${BACKEND_URL}/session/${sessionToken}`);
+      if (!res.ok) throw new Error('Session not found or expired');
+      return res.json();
     }
 
-    function createGuildElement(guild) {
-      const div = document.createElement('div');
-      div.className = 'guild';
+    function createServerCard(guild, roleLabel) {
+      const card = document.createElement('div');
+      card.className = 'server-card';
+      card.onclick = () => {
+        // You can update this URL as needed
+        window.location.href = `dashboard.html?guild=${guild.id}`;
+      };
 
       const iconDiv = document.createElement('div');
-      iconDiv.className = 'guild-icon';
+      iconDiv.className = 'server-icon';
 
       if (guild.icon) {
         const img = document.createElement('img');
         img.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
-        img.alt = `${guild.name} icon`;
+        img.alt = `${guild.name} Icon`;
         iconDiv.appendChild(img);
       } else {
         iconDiv.textContent = guild.name.charAt(0).toUpperCase();
       }
 
       const infoDiv = document.createElement('div');
-      infoDiv.textContent = guild.name;
+      infoDiv.className = 'server-info';
 
-      div.appendChild(iconDiv);
-      div.appendChild(infoDiv);
+      const name = document.createElement('h3');
+      name.className = 'server-name';
+      name.textContent = guild.name;
 
-      return div;
+      const role = document.createElement('div');
+      role.className = 'server-role';
+      role.textContent = roleLabel;
+
+      infoDiv.appendChild(name);
+      infoDiv.appendChild(role);
+
+      card.appendChild(iconDiv);
+      card.appendChild(infoDiv);
+
+      return card;
     }
 
     async function main() {
       const sessionToken = getQueryParam('session');
-      const content = document.getElementById('content');
+      const content = document.getElementById('serverList');
+      const noServers = document.getElementById('noServersMsg');
+      const userInfo = document.getElementById('userInfo');
 
       if (!sessionToken) {
-        content.innerHTML = `<p>No session token found. Please <a href="${BACKEND_URL}/login" style="color:lightblue;">login</a>.</p>`;
+        content.innerHTML = `<p>No session token. Please <a href="${BACKEND_URL}/login">login</a>.</p>`;
         return;
       }
 
       try {
         const data = await fetchSessionData(sessionToken);
 
-        content.innerHTML = `
-          <h2>Welcome, ${data.user.username}#${data.user.discriminator}</h2>
-          <p>Your servers:</p>
-        `;
+        // Show username + avatar
+        document.getElementById('usernameDisplay').textContent = `Welcome, ${data.user.username}#${data.user.discriminator}`;
+        document.getElementById('pfp').src = `https://cdn.discordapp.com/avatars/${data.user.id}/${data.user.avatar}.png`;
 
-        if (data.guilds.length === 0) {
-          content.innerHTML += `<p>You are not an admin of any servers.</p>`;
-          return;
-        }
+        const ADMIN_BIT = 0x8;
+        const STAFF_ROLE_IDS = []; // Add role IDs or logic if needed
 
+        let shown = 0;
         data.guilds.forEach(guild => {
-          // Filter to only show guilds where user has admin perms
-          const ADMIN_BIT = 0x8;
+          let label = null;
+
           if ((guild.permissions & ADMIN_BIT) === ADMIN_BIT) {
-            const guildElem = createGuildElement(guild);
-            content.appendChild(guildElem);
+            label = 'Administrator';
+          } else if (guild.owner) {
+            label = 'Owner';
+          }
+
+          if (label) {
+            const card = createServerCard(guild, label);
+            content.appendChild(card);
+            shown++;
           }
         });
+
+        if (shown === 0) {
+          noServers.style.display = 'block';
+        }
       } catch (err) {
-        content.innerHTML = `<p>Error: ${err.message}. <a href="${BACKEND_URL}/login" style="color:lightblue;">Login again</a></p>`;
+        content.innerHTML = `<p style="color:red;">Error: ${err.message}. <a href="${BACKEND_URL}/login">Login again</a></p>`;
       }
     }
+
+    document.getElementById('logoutBtn').onclick = () => {
+      window.location.href = `${BACKEND_URL}/login`;
+    };
 
     main();
   </script>
