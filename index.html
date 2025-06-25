@@ -66,6 +66,45 @@
     .btn:active {
       transform: scale(0.95);
     }
+    h1 {
+      margin-left: 30px;
+      margin-top: 30px;
+      color: #aad4ff;
+      text-shadow: 0 0 8px #65aaddcc;
+    }
+    .bot-info {
+      margin: 30px 30px;
+      background: rgba(255,255,255,0.08);
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #65aadd88;
+      max-width: 600px;
+      color: #aad4ff;
+    }
+    .bot-info h2 {
+      margin-top: 0;
+      color: #aad4ff;
+      text-shadow: 0 0 6px #65aaddbb;
+      font-weight: 700;
+    }
+    .info-item {
+      margin-top: 15px;
+      font-weight: 600;
+    }
+    .info-item .label {
+      color: #65aadd;
+      margin-right: 8px;
+    }
+    .bot-info ul {
+      padding-left: 20px;
+      margin-top: 5px;
+      list-style-type: disc;
+      font-weight: 400;
+      color: #cde6ff;
+    }
+    .bot-info ul li {
+      margin-bottom: 6px;
+    }
   </style>
 </head>
 <body>
@@ -79,9 +118,33 @@
       <button class="btn" id="dashboardBtn">Dashboard</button>
     </div>
   </nav>
-  <div>
-    <h1>Horizon Discord Bot</h1>
-  </div>
+
+  <h1>Horizon Discord Bot</h1>
+
+  <section class="bot-info" id="botInfo">
+    <h2>About Horizon Bot</h2>
+    <div class="info-item"><span class="label">Version:</span><span id="botVersion">1.0.0</span></div>
+    <div class="info-item">
+      <span class="label">Features:</span>
+      <ul>
+        <li>Moderation commands (ban, kick, mute)</li>
+        <li>Customizable welcome messages</li>
+        <li>Music playback support</li>
+        <li>Reaction roles & giveaways</li>
+        <li>Advanced logging and analytics</li>
+      </ul>
+    </div>
+    <div class="info-item">
+      <span class="label">Commands:</span>
+      <ul>
+        <li>!help - Show all commands</li>
+        <li>!play [song] - Play music</li>
+        <li>!ban [user] - Ban a user</li>
+        <li>!stats - Show bot stats</li>
+        <li>!giveaway - Start a giveaway</li>
+      </ul>
+    </div>
+  </section>
 
   <script>
     const loginBtn = document.getElementById('loginBtn');
