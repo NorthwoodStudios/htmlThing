@@ -141,24 +141,29 @@
   </main>
 
   <script>
-    // Helper to parse JSON from query string safely
-    function parseJSONParam(param) {
-      if (!param) return null;
+    // Helper to safely parse base64-encoded JSON data
+    function parseBase64JSON(base64String) {
+      if (!base64String) return null;
       try {
-        return JSON.parse(decodeURIComponent(param));
+        // atob() decodes base64 to string
+        const jsonString = atob(base64String);
+        return JSON.parse(jsonString);
       } catch (e) {
-        console.error('Failed to parse param:', e);
+        console.error('Failed to decode and parse base64 JSON:', e);
         return null;
       }
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const user = parseJSONParam(urlParams.get('user'));
-    const guilds = parseJSONParam(urlParams.get('guilds'));
+    const encodedData = urlParams.get('data');
+    const data = parseBase64JSON(encodedData);
 
-    if (!user || !guilds) {
-      window.location.href = 'index.html'; // Redirect if invalid
+    if (!data || !data.user || !data.guilds) {
+      // Redirect to homepage or login if no valid data
+      window.location.href = 'index.html';
     } else {
+      const { user, guilds } = data;
+
       document.getElementById('usernameDisplay').textContent = `Welcome, ${user.username}#${user.discriminator}`;
       const pfp = document.querySelector('.pfp');
 
@@ -166,8 +171,11 @@
         pfp.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
       }
 
+      // Discord ADMIN permission bitmask
       const ADMIN_BIT = 0x8;
-      const visibleGuilds = guilds.filter(g => (g.permissions & ADMIN_BIT) === ADMIN_BIT);
+
+      // Filter guilds where user has admin permission
+      const visibleGuilds = guilds.filter(guild => (guild.permissions & ADMIN_BIT) === ADMIN_BIT);
 
       const serverListElem = document.getElementById('serverList');
       const noServersMsg = document.getElementById('noServersMsg');
