@@ -12,9 +12,13 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: #f0f4f8;
-      height: 100vh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .Nav {
+      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -23,6 +27,10 @@
       background: rgba(255, 255, 255, 0.05);
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       backdrop-filter: blur(10px);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
     }
     .user-info {
       display: flex;
@@ -35,6 +43,11 @@
       margin-right: 12px;
       border: 2px solid #65aadd;
       box-shadow: 0 0 10px #65aadd88;
+      transition: transform 0.3s ease;
+    }
+    .pfp:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #65aaddcc;
     }
     .UserTag {
       font-size: 22px;
@@ -42,6 +55,8 @@
       color: #aad4ff;
       text-shadow: 0 0 6px #65aaddbb;
       margin-right: 15px;
+      user-select: none;
+      white-space: nowrap;
     }
     #authButtons {
       display: flex;
@@ -56,54 +71,87 @@
       color: white;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
       box-shadow: 0 0 10px #65aaddaa;
+      user-select: none;
     }
     .btn:hover {
       background-color: #4e8ecc;
       box-shadow: 0 0 20px #4e8ecccc;
+      transform: translateY(-2px);
     }
     .btn:active {
       transform: scale(0.95);
     }
     h1 {
-      margin-left: 30px;
-      margin-top: 30px;
+      margin: 100px 30px 30px 30px; /* account for fixed nav */
       color: #aad4ff;
       text-shadow: 0 0 8px #65aaddcc;
+      user-select: none;
     }
-    .bot-info {
-      margin: 30px 30px;
-      background: rgba(255,255,255,0.08);
-      padding: 20px 25px;
-      border-radius: 12px;
+    /* Container for the cards */
+    .bot-info-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 25px;
+      max-width: 900px;
+      margin-bottom: 50px;
+      padding: 0 15px;
+    }
+    /* Individual card styling */
+    .bot-card {
+      background: rgba(30, 50, 70, 0.6);
+      border-radius: 15px;
       box-shadow: 0 0 15px #65aadd88;
-      max-width: 600px;
+      padding: 25px 30px;
+      width: 280px;
       color: #aad4ff;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+      user-select: none;
     }
-    .bot-info h2 {
+    .bot-card:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 10px 25px #65aadddd;
+      background: rgba(40, 70, 110, 0.85);
+    }
+    .bot-card h2 {
       margin-top: 0;
-      color: #aad4ff;
-      text-shadow: 0 0 6px #65aaddbb;
+      margin-bottom: 15px;
       font-weight: 700;
+      font-size: 24px;
+      text-shadow: 0 0 8px #65aaddbb;
     }
-    .info-item {
-      margin-top: 15px;
-      font-weight: 600;
+    .bot-card .version {
+      font-weight: 700;
+      font-size: 20px;
+      color: #83baff;
+      user-select: text;
     }
-    .info-item .label {
-      color: #65aadd;
-      margin-right: 8px;
-    }
-    .bot-info ul {
+    .bot-card ul {
       padding-left: 20px;
-      margin-top: 5px;
+      margin: 0;
       list-style-type: disc;
       font-weight: 400;
       color: #cde6ff;
+      max-height: 180px;
+      overflow-y: auto;
     }
-    .bot-info ul li {
-      margin-bottom: 6px;
+    .bot-card ul li {
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    /* Scrollbar style for ul if overflow */
+    .bot-card ul::-webkit-scrollbar {
+      width: 6px;
+    }
+    .bot-card ul::-webkit-scrollbar-thumb {
+      background-color: #65aadd88;
+      border-radius: 3px;
+    }
+    .bot-card ul::-webkit-scrollbar-track {
+      background: transparent;
     }
   </style>
 </head>
@@ -121,11 +169,14 @@
 
   <h1>Horizon Discord Bot</h1>
 
-  <section class="bot-info" id="botInfo">
-    <h2>About Horizon Bot</h2>
-    <div class="info-item"><span class="label">Version:</span><span id="botVersion">1.0.0</span></div>
-    <div class="info-item">
-      <span class="label">Features:</span>
+  <section class="bot-info-container" id="botInfo">
+    <article class="bot-card">
+      <h2>Version</h2>
+      <div class="version" id="botVersion">1.0.0</div>
+    </article>
+
+    <article class="bot-card">
+      <h2>Features</h2>
       <ul>
         <li>Moderation commands (ban, kick, mute)</li>
         <li>Customizable welcome messages</li>
@@ -133,9 +184,10 @@
         <li>Reaction roles & giveaways</li>
         <li>Advanced logging and analytics</li>
       </ul>
-    </div>
-    <div class="info-item">
-      <span class="label">Commands:</span>
+    </article>
+
+    <article class="bot-card">
+      <h2>Commands</h2>
       <ul>
         <li>!help - Show all commands</li>
         <li>!play [song] - Play music</li>
@@ -143,7 +195,7 @@
         <li>!stats - Show bot stats</li>
         <li>!giveaway - Start a giveaway</li>
       </ul>
-    </div>
+    </article>
   </section>
 
   <script>
