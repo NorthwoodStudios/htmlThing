@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -118,6 +118,9 @@
       margin-top: 40px;
       text-align: center;
     }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -137,98 +140,82 @@
     <p class="no-servers hidden" id="noServersMsg">No servers available to manage.</p>
   </main>
 
- <script>
-  // Helper: safely parse JSON from URI component
-  function parseJSONParam(param) {
-    if (!param) return null;
-    try {
-      return JSON.parse(decodeURIComponent(param));
-    } catch {
-      return null;
+  <script>
+    // Helper to parse JSON from query string safely
+    function parseJSONParam(param) {
+      if (!param) return null;
+      try {
+        return JSON.parse(decodeURIComponent(param));
+      } catch (e) {
+        console.error('Failed to parse param:', e);
+        return null;
+      }
     }
-  }
 
-  // Get user and guilds data from URL params
-  const urlParams = new URLSearchParams(window.location.search);
-  const user = parseJSONParam(urlParams.get('user'));
-  const guilds = parseJSONParam(urlParams.get('guilds'));
+    const urlParams = new URLSearchParams(window.location.search);
+    const user = parseJSONParam(urlParams.get('user'));
+    const guilds = parseJSONParam(urlParams.get('guilds'));
 
-  if (!user || !guilds) {
-    // If no valid data, redirect to login page
-    window.location.href = 'index.html';
-  } else {
-    // Show username and avatar
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    const pfp = document.querySelector('.pfp');
-
-    usernameDisplay.textContent = `Welcome, ${user.username}#${user.discriminator}`;
-
-    if (user.avatar) {
-      pfp.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+    if (!user || !guilds) {
+      window.location.href = 'index.html'; // Redirect if invalid
     } else {
-      pfp.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+      document.getElementById('usernameDisplay').textContent = `Welcome, ${user.username}#${user.discriminator}`;
+      const pfp = document.querySelector('.pfp');
+
+      if (user.avatar) {
+        pfp.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+      }
+
+      const ADMIN_BIT = 0x8;
+      const visibleGuilds = guilds.filter(g => (g.permissions & ADMIN_BIT) === ADMIN_BIT);
+
+      const serverListElem = document.getElementById('serverList');
+      const noServersMsg = document.getElementById('noServersMsg');
+
+      if (visibleGuilds.length === 0) {
+        noServersMsg.classList.remove('hidden');
+      } else {
+        visibleGuilds.forEach(guild => {
+          const card = document.createElement('div');
+          card.className = 'server-card';
+          card.onclick = () => window.location.href = `Dashboard.html?guild=${guild.id}`;
+
+          const iconDiv = document.createElement('div');
+          iconDiv.className = 'server-icon';
+
+          if (guild.icon) {
+            const img = document.createElement('img');
+            img.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
+            img.alt = guild.name + " Icon";
+            iconDiv.appendChild(img);
+          } else {
+            iconDiv.textContent = guild.name.charAt(0).toUpperCase();
+          }
+
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'server-info';
+
+          const nameEl = document.createElement('h3');
+          nameEl.className = 'server-name';
+          nameEl.textContent = guild.name;
+
+          const roleEl = document.createElement('div');
+          roleEl.className = 'server-role';
+          roleEl.textContent = 'Administrator';
+
+          infoDiv.appendChild(nameEl);
+          infoDiv.appendChild(roleEl);
+          card.appendChild(iconDiv);
+          card.appendChild(infoDiv);
+          serverListElem.appendChild(card);
+        });
+      }
+
+      document.getElementById('logoutBtn').onclick = () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      };
     }
-
-    // Administrator bit is 0x8
-    const ADMIN_BIT = 0x8;
-
-    // Filter guilds where user has Administrator permission
-    const visibleGuilds = guilds.filter(guild => (guild.permissions & ADMIN_BIT) === ADMIN_BIT);
-
-    const serverListElem = document.getElementById('serverList');
-    const noServersMsg = document.getElementById('noServersMsg');
-
-    if (visibleGuilds.length === 0) {
-      noServersMsg.classList.remove('hidden');
-    } else {
-      noServersMsg.classList.add('hidden');
-
-      visibleGuilds.forEach(guild => {
-        const card = document.createElement('div');
-        card.className = 'server-card';
-        card.onclick = () => {
-          window.location.href = `Dashboard.html?guild=${guild.id}`;
-        };
-
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'server-icon';
-
-        if (guild.icon) {
-          const img = document.createElement('img');
-          img.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
-          img.alt = guild.name + " Icon";
-          iconDiv.appendChild(img);
-        } else {
-          iconDiv.textContent = guild.name.charAt(0).toUpperCase();
-        }
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'server-info';
-
-        const nameH3 = document.createElement('h3');
-        nameH3.className = 'server-name';
-        nameH3.textContent = guild.name;
-
-        const roleSpan = document.createElement('div');
-        roleSpan.className = 'server-role';
-        roleSpan.textContent = 'Administrator';
-
-        infoDiv.appendChild(nameH3);
-        infoDiv.appendChild(roleSpan);
-
-        card.appendChild(iconDiv);
-        card.appendChild(infoDiv);
-
-        serverListElem.appendChild(card);
-      });
-    }
-
-    // Logout button clears localStorage and redirects to login
-    document.getElementById('logoutBtn').onclick = () => {
-      localStorage.clear();
-      window.location.href = 'index.html';
-    };
-  }
-</script>
+  </script>
 </body>
 </html>
