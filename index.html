@@ -15,7 +15,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: stretch; /* stretch full width */
+      align-items: stretch;
     }
     .Nav {
       width: 100%;
@@ -84,87 +84,106 @@
       transform: scale(0.95);
     }
     h1 {
-      margin: 100px 30px 30px 30px; /* account for fixed nav */
+      margin: 100px 30px 40px 30px; /* account for fixed nav */
       color: #aad4ff;
       text-shadow: 0 0 8px #65aaddcc;
       user-select: none;
       text-align: center;
     }
-    /* Container for the cards - full width with padding */
-    .bot-info-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around; /* spread cards evenly */
-      gap: 25px;
+
+    /* Container for the big info boxes */
+    .big-box {
       width: 100%;
-      padding: 0 40px 50px 40px;
-      box-sizing: border-box;
-    }
-    /* Individual card styling */
-    .bot-card {
-      background: rgba(30, 50, 70, 0.6);
+      max-width: 1200px;
+      background: rgba(30, 50, 70, 0.8);
+      margin: 0 auto 40px auto;
       border-radius: 15px;
-      box-shadow: 0 0 15px #65aadd88;
-      padding: 25px 30px;
-      width: 280px; /* fixed width for consistent size */
+      box-shadow: 0 0 20px #65aaddbb;
+      padding: 40px 60px;
+      box-sizing: border-box;
       color: #aad4ff;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
       cursor: default;
       user-select: none;
-      flex-shrink: 0; /* prevent shrinking on smaller screens */
     }
-    .bot-card:hover {
-      transform: translateY(-10px) scale(1.05);
-      box-shadow: 0 10px 25px #65aadddd;
-      background: rgba(40, 70, 110, 0.85);
+    .big-box:hover {
+      background: rgba(40, 70, 110, 0.95);
+      box-shadow: 0 0 35px #65aaddee;
+      transform: translateY(-8px);
     }
-    .bot-card h2 {
+    .big-box h2 {
       margin-top: 0;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
+      font-size: 28px;
       font-weight: 700;
-      font-size: 24px;
-      text-shadow: 0 0 8px #65aaddbb;
+      text-shadow: 0 0 10px #65aaddcc;
     }
-    .bot-card .version {
+    .big-box p, 
+    .big-box ul {
+      font-size: 18px;
+      line-height: 1.5;
+      color: #cde6ff;
+      margin: 0;
+    }
+    .big-box ul {
+      padding-left: 25px;
+      margin-top: 10px;
+    }
+    .big-box ul li {
+      margin-bottom: 10px;
+    }
+    .version-info {
       font-weight: 700;
-      font-size: 20px;
+      font-size: 22px;
       color: #83baff;
+      margin-bottom: 20px;
       user-select: text;
     }
-    .bot-card ul {
-      padding-left: 20px;
-      margin: 0;
-      list-style-type: disc;
-      font-weight: 400;
-      color: #cde6ff;
-      max-height: 180px;
+    /* Scrollbar for updates list if too long */
+    .updates-list {
+      max-height: 200px;
       overflow-y: auto;
+      padding-left: 20px;
+      margin-top: 10px;
+      color: #cde6ff;
     }
-    .bot-card ul li {
+    .updates-list li {
       margin-bottom: 8px;
-      line-height: 1.3;
     }
-    /* Scrollbar style for ul if overflow */
-    .bot-card ul::-webkit-scrollbar {
-      width: 6px;
+    .updates-list::-webkit-scrollbar {
+      width: 8px;
     }
-    .bot-card ul::-webkit-scrollbar-thumb {
+    .updates-list::-webkit-scrollbar-thumb {
       background-color: #65aadd88;
-      border-radius: 3px;
+      border-radius: 4px;
     }
-    .bot-card ul::-webkit-scrollbar-track {
+    .updates-list::-webkit-scrollbar-track {
       background: transparent;
     }
-    @media (max-width: 960px) {
-      /* For smaller screens, center cards */
-      .bot-info-container {
-        justify-content: center;
-        padding: 0 20px 50px 20px;
+
+    @media (max-width: 768px) {
+      .big-box {
+        padding: 30px 20px;
+        margin-bottom: 30px;
+      }
+      h1 {
+        margin: 90px 20px 30px 20px;
+        font-size: 28px;
+      }
+      .big-box h2 {
+        font-size: 24px;
       }
     }
-    @media (max-width: 320px) {
-      .bot-card {
-        width: 90vw;
+    @media (max-width: 400px) {
+      h1 {
+        font-size: 24px;
+        margin: 80px 15px 25px 15px;
+      }
+      .big-box {
+        padding: 20px 15px;
+      }
+      .big-box p, .big-box ul {
+        font-size: 16px;
       }
     }
   </style>
@@ -183,33 +202,28 @@
 
   <h1>Horizon Discord Bot</h1>
 
-  <section class="bot-info-container" id="botInfo">
-    <article class="bot-card">
-      <h2>Version</h2>
-      <div class="version" id="botVersion">1.0.0</div>
-    </article>
+  <section class="big-box" id="botInfoBox">
+    <h2>About Horizon Bot</h2>
+    <p>Horizon is a powerful and versatile Discord bot designed to improve your server experience with a wide range of features, from moderation tools to interactive commands.</p>
+    <ul>
+      <li>Moderation: ban, kick, mute commands with role management</li>
+      <li>Welcome messages with customizable templates</li>
+      <li>Music playback support with playlists and queues</li>
+      <li>Reaction roles and giveaways to boost engagement</li>
+      <li>Advanced logging and analytics to monitor your server</li>
+    </ul>
+  </section>
 
-    <article class="bot-card">
-      <h2>Features</h2>
-      <ul>
-        <li>Moderation commands (ban, kick, mute)</li>
-        <li>Customizable welcome messages</li>
-        <li>Music playback support</li>
-        <li>Reaction roles & giveaways</li>
-        <li>Advanced logging and analytics</li>
-      </ul>
-    </article>
-
-    <article class="bot-card">
-      <h2>Commands</h2>
-      <ul>
-        <li>!help - Show all commands</li>
-        <li>!play [song] - Play music</li>
-        <li>!ban [user] - Ban a user</li>
-        <li>!stats - Show bot stats</li>
-        <li>!giveaway - Start a giveaway</li>
-      </ul>
-    </article>
+  <section class="big-box" id="versionBox">
+    <h2>Version & Updates</h2>
+    <div class="version-info" id="botVersion">Version 1.0.0</div>
+    <p>Latest updates:</p>
+    <ul class="updates-list">
+      <li>v1.0.0 - Initial release with core features.</li>
+      <li>v1.1.0 - Added music playback commands and improved UI.</li>
+      <li>v1.2.0 - Introduced giveaways and reaction roles.</li>
+      <li>v1.3.0 - Bug fixes and performance improvements.</li>
+    </ul>
   </section>
 
   <script>
@@ -252,7 +266,6 @@
     dashboardBtn.onclick = () => {
       if (isLoggedIn) {
         // Redirect to dashboard page with data if needed (or just open page)
-        // You can pass user info in sessionStorage/localStorage or query params
         window.location.href = 'DashboardDiscovery.html';
       } else {
         // Not logged in → redirect to backend OAuth login
