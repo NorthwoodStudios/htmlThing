@@ -1,115 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Horizon Bot - Dashboard Discovery</title>
-<style>
-  /* Your CSS styles from previous example */
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Discovery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      padding: 20px;
+    }
+    .guild {
+      background: #222;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+    }
+    .guild-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      margin-right: 12px;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      color: #aaa;
+      overflow: hidden;
+    }
+    .guild-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+  </style>
 </head>
 <body>
-  <nav class="Nav">
-    <div class="user-info" id="userInfo">
-      <img class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="User Profile" />
-      <h3 id="usernameDisplay">Welcome, User</h3>
-    </div>
-    <button class="btn" id="logoutBtn">Logout</button>
-  </nav>
+  <h1>Dashboard Discovery</h1>
+  <div id="content">Loading...</div>
 
-  <main>
-    <h1>Select a Server</h1>
-    <div class="server-list" id="serverList"></div>
-    <p class="no-servers hidden" id="noServersMsg">No servers available to manage.</p>
-  </main>
+  <script>
+    const BACKEND_URL = 'http://localhost:3000'; // Change this to your backend URL in production
 
-<script>
-(async () => {
-  // Parse session token from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const sessionToken = urlParams.get('session');
-  if (!sessionToken) {
-    alert('No session token found. Please login again.');
-    window.location.href = '/login.html'; // Your login page
-    return;
-  }
-
-  try {
-    // Fetch session data from backend
-    const BACKEND_URL = 'https://backend-js-3uce.onrender.com'; // <-- your backend domain here
-
-    const response = await fetch(`${BACKEND_URL}/session/${sessionToken}`);
-    if (!response.ok) {
-      alert('Session expired or invalid. Please login again.');
-      window.location.href = '/login.html';
-      return;
+    // Helper to get query param
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
     }
 
-    const data = await response.json();
-    const { user, guilds } = data;
-
-    // Display user info
-    document.getElementById('usernameDisplay').textContent = `Welcome, ${user.username}#${user.discriminator}`;
-    const pfp = document.querySelector('.pfp');
-    if (user.avatar) {
-      pfp.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+    async function fetchSessionData(sessionToken) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/session/${sessionToken}`);
+        if (!res.ok) throw new Error('Session not found or expired');
+        return await res.json();
+      } catch (err) {
+        throw err;
+      }
     }
 
-    // Filter guilds with admin permissions
-    const ADMIN_BIT = 0x8;
-    const visibleGuilds = guilds.filter(g => (g.permissions & ADMIN_BIT) === ADMIN_BIT);
+    function createGuildElement(guild) {
+      const div = document.createElement('div');
+      div.className = 'guild';
 
-    const serverListElem = document.getElementById('serverList');
-    const noServersMsg = document.getElementById('noServersMsg');
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'guild-icon';
 
-    if (visibleGuilds.length === 0) {
-      noServersMsg.classList.remove('hidden');
-    } else {
-      visibleGuilds.forEach(guild => {
-        const card = document.createElement('div');
-        card.className = 'server-card';
-        card.onclick = () => window.location.href = `Dashboard.html?guild=${guild.id}`;
+      if (guild.icon) {
+        const img = document.createElement('img');
+        img.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
+        img.alt = `${guild.name} icon`;
+        iconDiv.appendChild(img);
+      } else {
+        iconDiv.textContent = guild.name.charAt(0).toUpperCase();
+      }
 
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'server-icon';
+      const infoDiv = document.createElement('div');
+      infoDiv.textContent = guild.name;
 
-        if (guild.icon) {
-          const img = document.createElement('img');
-          img.src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`;
-          img.alt = guild.name + " Icon";
-          iconDiv.appendChild(img);
-        } else {
-          iconDiv.textContent = guild.name.charAt(0).toUpperCase();
+      div.appendChild(iconDiv);
+      div.appendChild(infoDiv);
+
+      return div;
+    }
+
+    async function main() {
+      const sessionToken = getQueryParam('session');
+      const content = document.getElementById('content');
+
+      if (!sessionToken) {
+        content.innerHTML = `<p>No session token found. Please <a href="${BACKEND_URL}/login" style="color:lightblue;">login</a>.</p>`;
+        return;
+      }
+
+      try {
+        const data = await fetchSessionData(sessionToken);
+
+        content.innerHTML = `
+          <h2>Welcome, ${data.user.username}#${data.user.discriminator}</h2>
+          <p>Your servers:</p>
+        `;
+
+        if (data.guilds.length === 0) {
+          content.innerHTML += `<p>You are not an admin of any servers.</p>`;
+          return;
         }
 
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'server-info';
-
-        const nameEl = document.createElement('h3');
-        nameEl.className = 'server-name';
-        nameEl.textContent = guild.name;
-
-        const roleEl = document.createElement('div');
-        roleEl.className = 'server-role';
-        roleEl.textContent = 'Administrator';
-
-        infoDiv.appendChild(nameEl);
-        infoDiv.appendChild(roleEl);
-        card.appendChild(iconDiv);
-        card.appendChild(infoDiv);
-        serverListElem.appendChild(card);
-      });
+        data.guilds.forEach(guild => {
+          // Filter to only show guilds where user has admin perms
+          const ADMIN_BIT = 0x8;
+          if ((guild.permissions & ADMIN_BIT) === ADMIN_BIT) {
+            const guildElem = createGuildElement(guild);
+            content.appendChild(guildElem);
+          }
+        });
+      } catch (err) {
+        content.innerHTML = `<p>Error: ${err.message}. <a href="${BACKEND_URL}/login" style="color:lightblue;">Login again</a></p>`;
+      }
     }
 
-    document.getElementById('logoutBtn').onclick = () => {
-      window.location.href = '/login.html';
-    };
-
-  } catch (err) {
-    alert('Failed to fetch session data. Please login again.');
-    window.location.href = '/login.html';
-  }
-})();
-</script>
+    main();
+  </script>
 </body>
 </html>
