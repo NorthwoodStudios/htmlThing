@@ -137,42 +137,46 @@
     <p class="no-servers hidden" id="noServersMsg">No servers available to manage.</p>
   </main>
 
-  <script>
-    // Simulated login check & username
-    //const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    //const username = localStorage.getItem('username') || 'User';
+ <script>
+  // Helper: safely parse JSON from URI component
+  function parseJSONParam(param) {
+    if (!param) return null;
+    try {
+      return JSON.parse(decodeURIComponent(param));
+    } catch {
+      return null;
+    }
+  }
 
-    if (!isLoggedIn) {
-      window.location.href = 'index.html';
+  // Get user and guilds data from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const user = parseJSONParam(urlParams.get('user'));
+  const guilds = parseJSONParam(urlParams.get('guilds'));
+
+  if (!user || !guilds) {
+    // If no valid data, redirect to login page
+    window.location.href = 'index.html';
+  } else {
+    // Show username and avatar
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    const pfp = document.querySelector('.pfp');
+
+    usernameDisplay.textContent = `Welcome, ${user.username}#${user.discriminator}`;
+
+    if (user.avatar) {
+      pfp.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
     } else {
-      document.getElementById('usernameDisplay').textContent = `Welcome, ${username}`;
+      pfp.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
     }
 
-    // Mock Discord guilds data example
-    // In real OAuth2, you get this from Discord API (GET /users/@me/guilds)
-    // Each guild includes: id, name, icon, owner (boolean)
-    const allGuilds = [
-      { id: '1', name: 'Horizon Dev Server', icon: null, owner: true },
-      { id: '2', name: 'Friends & Fun', icon: null, owner: false },
-      { id: '3', name: 'Gaming Central', icon: null, owner: false },
-      { id: '4', name: 'Staff Hub', icon: null, owner: false }
-    ];
+    // Administrator bit is 0x8
+    const ADMIN_BIT = 0x8;
 
-    // Mock roles for the current user
-    // For example, the user is Staff in guild #4 only
-    // Owner is as per guild.owner = true
-    // We'll only show servers where user is owner or staff
-    const userRoles = {
-      '1': 'Administrator',// owner
-      '4': 'Staff'
-      // guild 2 & 3 user is not staff or owner, so excluded
-    };
+    // Filter guilds where user has Administrator permission
+    const visibleGuilds = guilds.filter(guild => (guild.permissions & ADMIN_BIT) === ADMIN_BIT);
 
     const serverListElem = document.getElementById('serverList');
     const noServersMsg = document.getElementById('noServersMsg');
-
-    // Filter servers the user has roles in
-    const visibleGuilds = allGuilds.filter(guild => userRoles[guild.id]);
 
     if (visibleGuilds.length === 0) {
       noServersMsg.classList.remove('hidden');
@@ -183,12 +187,9 @@
         const card = document.createElement('div');
         card.className = 'server-card';
         card.onclick = () => {
-          window.location.href = "Dashboard.html"
-          // Here you would redirect or load server dashboard etc.
-          // Example: window.location.href = `serverDashboard.html?guild=${guild.id}`;
+          window.location.href = `Dashboard.html?guild=${guild.id}`;
         };
 
-        // Server icon or placeholder
         const iconDiv = document.createElement('div');
         iconDiv.className = 'server-icon';
 
@@ -198,7 +199,6 @@
           img.alt = guild.name + " Icon";
           iconDiv.appendChild(img);
         } else {
-          // Placeholder letter for guild name
           iconDiv.textContent = guild.name.charAt(0).toUpperCase();
         }
 
@@ -211,7 +211,7 @@
 
         const roleSpan = document.createElement('div');
         roleSpan.className = 'server-role';
-        roleSpan.textContent = userRoles[guild.id];
+        roleSpan.textContent = 'Administrator';
 
         infoDiv.appendChild(nameH3);
         infoDiv.appendChild(roleSpan);
@@ -223,12 +223,12 @@
       });
     }
 
-    // Logout button
+    // Logout button clears localStorage and redirects to login
     document.getElementById('logoutBtn').onclick = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('username');
+      localStorage.clear();
       window.location.href = 'index.html';
     };
-  </script>
+  }
+</script>
 </body>
 </html>
