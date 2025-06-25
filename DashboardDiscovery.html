@@ -36,7 +36,9 @@
 
   try {
     // Fetch session data from backend
-    const response = await fetch(`/session/${sessionToken}`);
+    const BACKEND_URL = 'https://backend-js-3uce.onrender.com'; // <-- your backend domain here
+
+    const response = await fetch(`${BACKEND_URL}/session/${sessionToken}`);
     if (!response.ok) {
       alert('Session expired or invalid. Please login again.');
       window.location.href = '/login.html';
