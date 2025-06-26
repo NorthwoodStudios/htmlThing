@@ -60,135 +60,145 @@
   </div>
 
   <script>
-    const toggleValues = {
-      "on": "off",
-      "off": "on",
-      "enabled": "disabled",
-      "disabled": "enabled",
-      "online": "offline",
-      "offline": "online"
+  const toggleValues = {
+  "on": "off",
+  "off": "on",
+  "enabled": "disabled",
+  "disabled": "enabled",
+  "online": "offline",
+  "offline": "online"
+};
+
+const settingsSchema = {
+  bot_status: "button",
+  command_prefix: "input",
+  anti_spam: "button",
+  bad_word_filter: "button",
+  anti_raid: "button",
+  kick_on_bot_join: "button",
+  log_channel_id: "input",
+  log_bans: "button",
+  current_prefix: "input"
+};
+
+let guildId = null;
+let currentSettings = {};
+
+function getGuildIdFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("guild");
+}
+
+function createSettingElement(key, value) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "setting";
+
+  const label = document.createElement("span");
+  label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+
+  wrapper.appendChild(label);
+
+  if (settingsSchema[key] === "button") {
+    const btn = document.createElement("button");
+    btn.textContent = capitalize(value);
+    btn.dataset.key = key;
+    btn.dataset.value = value;
+    btn.onclick = () => {
+      const newVal = toggleValues[btn.dataset.value] || btn.dataset.value;
+      btn.textContent = capitalize(newVal);
+      btn.dataset.value = newVal;
+      currentSettings[key] = newVal;
+      sendAllSettings();
     };
-
-    const settingsSchema = {
-      bot_status: "button",
-      command_prefix: "input",
-      anti_spam: "button",
-      bad_word_filter: "button",
-      anti_raid: "button",
-      kick_on_bot_join: "button",
-      log_channel_id: "input",
-      log_bans: "button",
-      current_prefix: "input"
+    wrapper.appendChild(btn);
+  } else if (settingsSchema[key] === "input") {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = value;
+    input.dataset.key = key;
+    input.onblur = () => {
+      currentSettings[key] = input.value;
+      sendAllSettings();
     };
+    wrapper.appendChild(input);
+  }
 
-    let guildId = null;
-    let currentSettings = {};
+  return wrapper;
+}
 
-    function getGuildIdFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("guild");
+async function loadSettings() {
+  guildId = getGuildIdFromURL();
+  const container = document.getElementById("settings-container");
+
+  if (!guildId) {
+    container.textContent = "Missing Guild ID in URL (?guild=123...).";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/get_settings?guild=${guildId}`);
+    const json = await res.json();
+
+    if (!json || !json.success) {
+      container.textContent = "No settings found. Loading defaults...";
+      currentSettings = getDefaultSettings();
+    } else {
+      currentSettings = { ...getDefaultSettings(), ...json.settings };
     }
 
-    function createSettingElement(key, value) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "setting";
+    renderSettings(currentSettings);
+  } catch (e) {
+    console.error("Failed to load settings:", e);
+    container.textContent = "Error loading settings.";
+  }
+}
 
-      const label = document.createElement("span");
-      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+function renderSettings(settings) {
+  const container = document.getElementById("settings-container");
+  container.innerHTML = "";
 
-      wrapper.appendChild(label);
+  Object.entries(settingsSchema).forEach(([key, type]) => {
+    const value = settings[key] ?? getDefaultForType(type);
+    currentSettings[key] = value;
+    const el = createSettingElement(key, value);
+    container.appendChild(el);
+  });
+}
 
-      if (settingsSchema[key] === "button") {
-        const btn = document.createElement("button");
-        btn.textContent = capitalize(value);
-        btn.dataset.key = key;
-        btn.dataset.value = value;
-        btn.onclick = () => {
-          const newVal = toggleValues[btn.dataset.value] || btn.dataset.value;
-          btn.textContent = capitalize(newVal);
-          btn.dataset.value = newVal;
-          currentSettings[key] = newVal;
-          sendAllSettings();
-        };
-        wrapper.appendChild(btn);
-      } else if (settingsSchema[key] === "input") {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = value;
-        input.dataset.key = key;
-        input.onblur = () => {
-          currentSettings[key] = input.value;
-          sendAllSettings();
-        };
-        wrapper.appendChild(input);
-      }
+function getDefaultForType(type) {
+  return type === "input" ? "" : "off";
+}
 
-      return wrapper;
-    }
+function getDefaultSettings() {
+  const defaults = {};
+  for (const [key, type] of Object.entries(settingsSchema)) {
+    defaults[key] = getDefaultForType(type);
+  }
+  return defaults;
+}
 
-    async function loadSettings() {
-      guildId = getGuildIdFromURL();
-      if (!guildId) {
-        document.getElementById("settings-container").textContent = "Missing Guild_Id in URL.";
-        return;
-      }
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
-      try {
-        const res = await fetch(`/get_settings?guild=${guildId}`);
-        const json = await res.json();
+async function sendAllSettings() {
+  const payload = {
+    guild: guildId,
+    settings: currentSettings
+  };
 
-        if (!json || !json.success) {
-          document.getElementById("settings-container").textContent = "Error loading settings.";
-          return;
-        }
+  try {
+    await fetch("/update_setting", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) {
+    console.error("Failed to send settings:", e);
+  }
+}
 
-        currentSettings = json.settings;
-        renderSettings(currentSettings);
-      } catch (e) {
-        console.error(e);
-        document.getElementById("settings-container").textContent = "Failed to load settings.";
-      }
-    }
-
-    function renderSettings(settings) {
-      const container = document.getElementById("settings-container");
-      container.innerHTML = "";
-
-      Object.entries(settingsSchema).forEach(([key, type]) => {
-        const value = settings[key] ?? getDefaultForType(type);
-        currentSettings[key] = value;
-        const el = createSettingElement(key, value);
-        container.appendChild(el);
-      });
-    }
-
-    function getDefaultForType(type) {
-      return type === "input" ? "" : "off";
-    }
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    async function sendAllSettings() {
-      const payload = {
-        guild: guildId,
-        settings: currentSettings
-      };
-
-      try {
-        await fetch("/update_setting", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {
-        console.error("Failed to send settings:", e);
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", loadSettings);
+window.addEventListener("DOMContentLoaded", loadSettings);
   </script>
-
 </body>
 </html>
