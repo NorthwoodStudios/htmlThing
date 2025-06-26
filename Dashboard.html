@@ -138,6 +138,7 @@ async function loadSettings() {
   try {
     const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
     const json = await res.json();
+    console.log("Settings response:", json);
 
     if (!json || !json.success) {
       container.textContent = "No settings found. Loading defaults...";
