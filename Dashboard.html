@@ -13,19 +13,16 @@
       display: flex;
       height: 100vh;
     }
-
     .sidebar {
       width: 200px;
       background-color: #1e2a38;
       padding: 20px;
       box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
     }
-
     .sidebar h3 {
       margin-bottom: 20px;
       color: #aad4ff;
     }
-
     .sidebar button {
       width: 100%;
       padding: 10px;
@@ -37,25 +34,21 @@
       cursor: pointer;
       text-align: left;
     }
-
     .sidebar button:hover,
     .sidebar button.active {
       background-color: #3498db;
     }
-
     .content {
       flex: 1;
       padding: 30px;
+      overflow-y: auto;
     }
-
     .page {
       display: none;
     }
-
     .page.active {
       display: block;
     }
-
     .setting {
       display: flex;
       justify-content: space-between;
@@ -65,7 +58,6 @@
       margin-bottom: 12px;
       border-radius: 8px;
     }
-
     .setting input,
     .setting button {
       padding: 6px 12px;
@@ -73,34 +65,50 @@
       border-radius: 6px;
       background-color: #34495e;
       color: white;
+      cursor: pointer;
+      min-width: 80px;
+      text-align: center;
     }
-
     .setting button:hover {
       background-color: #2980b9;
+    }
+    input[type="text"] {
+      cursor: text;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <h3>Settings</h3>
-    <button class="tab active" onclick="showPage('general')">General</button>
-    <button class="tab" onclick="showPage('automod')">Automod</button>
-    <button class="tab" onclick="showPage('protection')">Server Protection</button>
-    <button class="tab" onclick="showPage('logging')">Logging</button>
-    <button class="tab" onclick="showPage('prefix')">Prefix</button>
+    <button class="tab active" onclick="showPage('general', event)">General</button>
+    <button class="tab" onclick="showPage('automod', event)">Automod</button>
+    <button class="tab" onclick="showPage('protection', event)">Server Protection</button>
+    <button class="tab" onclick="showPage('logging', event)">Logging</button>
+    <button class="tab" onclick="showPage('prefix', event)">Prefix</button>
   </div>
 
-  <div class="content">
+  <div class="content" id="content-area">
     <!-- General Page -->
     <div id="general" class="page active">
       <h2>General Settings</h2>
       <div class="setting">
         <span>Bot Status</span>
-        <button>Online</button>
+        <button 
+          data-setting="bot_status" 
+          data-guild="" 
+          data-value="online"
+          onclick="toggleButton(this)"
+        >Online</button>
       </div>
       <div class="setting">
         <span>Command Prefix</span>
-        <input type="text" placeholder="!">
+        <input 
+          type="text" 
+          placeholder="!" 
+          data-setting="command_prefix" 
+          data-guild="" 
+          onblur="updateInput(this)"
+        >
       </div>
     </div>
 
@@ -109,11 +117,21 @@
       <h2>Automod</h2>
       <div class="setting">
         <span>Anti-Spam</span>
-        <button>Enabled</button>
+        <button 
+          data-setting="anti_spam" 
+          data-guild="" 
+          data-value="enabled" 
+          onclick="toggleButton(this)"
+        >Enabled</button>
       </div>
       <div class="setting">
         <span>Bad Word Filter</span>
-        <button>Disabled</button>
+        <button 
+          data-setting="bad_word_filter" 
+          data-guild="" 
+          data-value="disabled" 
+          onclick="toggleButton(this)"
+        >Disabled</button>
       </div>
     </div>
 
@@ -122,11 +140,21 @@
       <h2>Server Protection</h2>
       <div class="setting">
         <span>Anti-Raid</span>
-        <button>Enabled</button>
+        <button 
+          data-setting="anti_raid" 
+          data-guild="" 
+          data-value="enabled" 
+          onclick="toggleButton(this)"
+        >Enabled</button>
       </div>
       <div class="setting">
         <span>Kick on Bot Join</span>
-        <button>Off</button>
+        <button 
+          data-setting="kick_on_bot_join" 
+          data-guild="" 
+          data-value="off" 
+          onclick="toggleButton(this)"
+        >Off</button>
       </div>
     </div>
 
@@ -135,11 +163,22 @@
       <h2>Logging</h2>
       <div class="setting">
         <span>Log Channel ID</span>
-        <input type="text" placeholder="1234567890">
+        <input 
+          type="text" 
+          placeholder="1234567890" 
+          data-setting="log_channel_id" 
+          data-guild="" 
+          onblur="updateInput(this)"
+        >
       </div>
       <div class="setting">
         <span>Log Bans</span>
-        <button>On</button>
+        <button 
+          data-setting="log_bans" 
+          data-guild="" 
+          data-value="on" 
+          onclick="toggleButton(this)"
+        >On</button>
       </div>
     </div>
 
@@ -148,27 +187,144 @@
       <h2>Prefix Settings</h2>
       <div class="setting">
         <span>Current Prefix</span>
-        <input type="text" value="!">
+        <input 
+          type="text" 
+          value="!" 
+          data-setting="current_prefix" 
+          data-guild="" 
+          onblur="updateInput(this)"
+        >
       </div>
       <div class="setting">
         <span>Reset to Default</span>
-        <button>Reset</button>
+        <button onclick="resetPrefix(this)">Reset</button>
       </div>
     </div>
   </div>
 
   <script>
-    function showPage(id) {
-      // Hide all pages
+    // Show page function with event param to set active tab
+    function showPage(id, event) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      // Show selected page
       document.getElementById(id).classList.add('active');
 
-      // Remove active class from all tabs
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      // Set active on clicked tab
       event.target.classList.add('active');
     }
+
+    // Helper to send updates to backend
+    async function sendUpdate(guild, setting, value) {
+      if (!guild) {
+        console.warn("Guild ID not set yet.");
+        return;
+      }
+      const payload = { guild, setting, value };
+      try {
+        const res = await fetch('/update_setting', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          console.error('Failed to update setting');
+        } else {
+          const data = await res.json();
+          console.log('Updated setting:', data);
+        }
+      } catch (err) {
+        console.error('Error updating setting:', err);
+      }
+    }
+
+    // Toggle button text and value, send update
+    function toggleButton(btn) {
+      // Define pairs for toggling buttons
+      const togglePairs = {
+        "online": "offline",
+        "offline": "online",
+        "enabled": "disabled",
+        "disabled": "enabled",
+        "on": "off",
+        "off": "on"
+      };
+
+      const currentVal = btn.dataset.value || btn.textContent.toLowerCase();
+      const newVal = togglePairs[currentVal] || currentVal;
+
+      btn.dataset.value = newVal;
+      btn.textContent = capitalizeFirstLetter(newVal);
+
+      const guild = btn.dataset.guild;
+      const setting = btn.dataset.setting;
+      sendUpdate(guild, setting, newVal);
+    }
+
+    // On input blur, send the updated value
+    function updateInput(input) {
+      const guild = input.dataset.guild;
+      const setting = input.dataset.setting;
+      const value = input.value.trim();
+      sendUpdate(guild, setting, value);
+    }
+
+    // Reset prefix to "!"
+    function resetPrefix(btn) {
+      const input = btn.closest('.page').querySelector('input[data-setting="current_prefix"]');
+      if (input) {
+        input.value = "!";
+        updateInput(input);
+      }
+    }
+
+    // Capitalize helper
+    function capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    // On page load: 
+    // 1) Get guild id from URL param,
+    // 2) Fill data-guild attributes,
+    // 3) Fetch current settings from backend and apply UI changes
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const guildId = params.get("Guild_Id");
+
+      if (!guildId) {
+        console.warn("No Guild_Id param in URL");
+        return;
+      }
+
+      // Set data-guild attribute on all inputs and buttons
+      document.querySelectorAll('button[data-setting], input[data-setting]').forEach(el => {
+        el.dataset.guild = guildId;
+      });
+
+      // Fetch saved settings
+      try {
+        const res = await fetch(`/get_settings?guild=${guildId}`);
+        if (!res.ok) throw new Error("Failed to load guild settings");
+        const settings = await res.json();
+
+        // Apply settings to UI
+        for (const [key, val] of Object.entries(settings)) {
+          // Find button or input with data-setting = key
+          const btn = document.querySelector(`button[data-setting="${key}"]`);
+          const input = document.querySelector(`input[data-setting="${key}"]`);
+
+          if (btn) {
+            btn.dataset.value = val.toLowerCase();
+            btn.textContent = capitalizeFirstLetter(val);
+          }
+          if (input) {
+            input.value = val;
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
