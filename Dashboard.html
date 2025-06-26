@@ -141,7 +141,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:8080/get_settings?guild=${guildId}`); // change URL to your backend endpoint
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`); // change URL to your backend endpoint
       const json = await res.json();
       console.log("Settings response:", json);
 
@@ -191,7 +191,7 @@
     };
 
     try {
-      await fetch("http://127.0.0.1:8080/update_setting", {  // change URL to your backend endpoint
+      await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {  // change URL to your backend endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
