@@ -202,129 +202,164 @@
     </div>
   </div>
 
-  <script>
-    // Show page function with event param to set active tab
-    function showPage(id, event) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+ <script>
+  // Show page function with event param to set active tab
+  function showPage(id, event) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
 
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
-    }
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+  }
 
-    // Helper to send updates to backend
-    async function sendUpdate(guild, setting, value) {
-      if (!guild) {
-        console.warn("Guild ID not set yet.");
-        return;
+  // Capitalize helper
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  // Collect all current settings from the UI into a single object
+  function collectAllSettings() {
+    const settings = {};
+    document.querySelectorAll('[data-setting]').forEach(el => {
+      const key = el.dataset.setting;
+      let val;
+      if (el.tagName === 'BUTTON') {
+        val = el.dataset.value || el.textContent.toLowerCase();
+      } else if (el.tagName === 'INPUT') {
+        val = el.value.trim();
       }
-      const payload = { guild, setting, value };
-      try {
-        const res = await fetch('/update_setting', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          console.error('Failed to update setting');
-        } else {
-          const data = await res.json();
-          console.log('Updated setting:', data);
-        }
-      } catch (err) {
-        console.error('Error updating setting:', err);
+      settings[key] = val;
+    });
+    return settings;
+  }
+
+  // Apply settings object to UI controls
+  function applySettings(settings) {
+    for (const [key, val] of Object.entries(settings)) {
+      const btn = document.querySelector(`button[data-setting="${key}"]`);
+      const input = document.querySelector(`input[data-setting="${key}"]`);
+
+      if (btn) {
+        btn.dataset.value = val.toLowerCase();
+        btn.textContent = capitalizeFirstLetter(val);
       }
-    }
-
-    // Toggle button text and value, send update
-    function toggleButton(btn) {
-      // Define pairs for toggling buttons
-      const togglePairs = {
-        "online": "offline",
-        "offline": "online",
-        "enabled": "disabled",
-        "disabled": "enabled",
-        "on": "off",
-        "off": "on"
-      };
-
-      const currentVal = btn.dataset.value || btn.textContent.toLowerCase();
-      const newVal = togglePairs[currentVal] || currentVal;
-
-      btn.dataset.value = newVal;
-      btn.textContent = capitalizeFirstLetter(newVal);
-
-      const guild = btn.dataset.guild;
-      const setting = btn.dataset.setting;
-      sendUpdate(guild, setting, newVal);
-    }
-
-    // On input blur, send the updated value
-    function updateInput(input) {
-      const guild = input.dataset.guild;
-      const setting = input.dataset.setting;
-      const value = input.value.trim();
-      sendUpdate(guild, setting, value);
-    }
-
-    // Reset prefix to "!"
-    function resetPrefix(btn) {
-      const input = btn.closest('.page').querySelector('input[data-setting="current_prefix"]');
       if (input) {
-        input.value = "!";
-        updateInput(input);
+        input.value = val;
       }
     }
+  }
 
-    // Capitalize helper
-    function capitalizeFirstLetter(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
+  // Send all settings as one payload and update UI with response
+  async function sendAllSettings(guild, updatedSetting, updatedValue) {
+    if (!guild) {
+      console.warn("Guild ID not set.");
+      return;
     }
 
-    // On page load: 
-    // 1) Get guild id from URL param,
-    // 2) Fill data-guild attributes,
-    // 3) Fetch current settings from backend and apply UI changes
-    async function init() {
-      const params = new URLSearchParams(window.location.search);
-      const guildId = params.get("Guild_Id");
+    // Update local settings object with the changed setting
+    const allSettings = collectAllSettings();
+    allSettings[updatedSetting] = updatedValue;
 
-      if (!guildId) {
-        console.warn("No Guild_Id param in URL");
-        return;
-      }
+    const payload = {
+      guild: guild,
+      settings: allSettings
+    };
 
-      // Set data-guild attribute on all inputs and buttons
-      document.querySelectorAll('button[data-setting], input[data-setting]').forEach(el => {
-        el.dataset.guild = guildId;
+    try {
+      const res = await fetch('/update_setting', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
       });
 
-      // Fetch saved settings
-      try {
-        const res = await fetch(`/get_settings?guild=${guildId}`);
-        if (!res.ok) throw new Error("Failed to load guild settings");
-        const settings = await res.json();
-
-        // Apply settings to UI
-        for (const [key, val] of Object.entries(settings)) {
-          // Find button or input with data-setting = key
-          const btn = document.querySelector(`button[data-setting="${key}"]`);
-          const input = document.querySelector(`input[data-setting="${key}"]`);
-
-          if (btn) {
-            btn.dataset.value = val.toLowerCase();
-            btn.textContent = capitalizeFirstLetter(val);
-          }
-          if (input) {
-            input.value = val;
-          }
-        }
-      } catch (err) {
-        console.error(err);
+      if (!res.ok) {
+        console.error('Failed to update settings');
+        return;
       }
+
+      const data = await res.json();
+      if (data.success && data.settings) {
+        applySettings(data.settings);
+      } else {
+        console.error('Unexpected response from server:', data);
+      }
+    } catch (err) {
+      console.error('Error sending settings:', err);
+    }
+  }
+
+  // Toggle button text and value, then send full update
+  function toggleButton(btn) {
+    const togglePairs = {
+      "online": "offline",
+      "offline": "online",
+      "enabled": "disabled",
+      "disabled": "enabled",
+      "on": "off",
+      "off": "on"
+    };
+
+    const currentVal = btn.dataset.value || btn.textContent.toLowerCase();
+    const newVal = togglePairs[currentVal] || currentVal;
+
+    btn.dataset.value = newVal;
+    btn.textContent = capitalizeFirstLetter(newVal);
+
+    const guild = btn.dataset.guild;
+    const setting = btn.dataset.setting;
+
+    sendAllSettings(guild, setting, newVal);
+  }
+
+  // On input blur, send full updated settings
+  function updateInput(input) {
+    const guild = input.dataset.guild;
+    const setting = input.dataset.setting;
+    const value = input.value.trim();
+    sendAllSettings(guild, setting, value);
+  }
+
+  // Reset prefix to "!" and update
+  function resetPrefix(btn) {
+    const input = btn.closest('.page').querySelector('input[data-setting="current_prefix"]');
+    if (input) {
+      input.value = "!";
+      updateInput(input);
+    }
+  }
+
+  // On page load: fetch guild id from URL, set it on controls, load and apply settings
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const guildId = params.get("Guild_Id");
+
+    if (!guildId) {
+      console.warn("No Guild_Id param in URL");
+      return;
     }
 
-    window.addEventListener('DOMContentLoaded', init);
-  </script>
+    // Set data-guild attribute on all buttons and inputs
+    document.querySelectorAll('button[data-setting], input[data-setting]').forEach(el => {
+      el.dataset.guild = guildId;
+    });
+
+    try {
+      const res = await fetch(`/get_guild_settings?guild_id=${guildId}`);
+      if (!res.ok) throw new Error("Failed to load guild settings");
+
+      const data = await res.json();
+      if (data.success && data.settings) {
+        applySettings(data.settings);
+      } else {
+        console.error('Failed to get valid settings from server', data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+
 </body>
 </html>
