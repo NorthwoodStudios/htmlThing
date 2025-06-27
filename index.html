@@ -1,321 +1,406 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Horizon Bot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Horizon Bot - The Ultimate ERLC Discord Bot</title>
   <style>
-    /* Reset & base */
-    body, html {
+    * {
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      color: #f0f4f8;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
+      box-sizing: border-box;
     }
-    .Nav {
+
+    html, body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+      color: #ffffff;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
       width: 100%;
+      background: rgba(10, 10, 15, 0.9);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    .nav-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 30px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      backdrop-filter: blur(10px);
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 10;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-    }
-    .pfp {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      margin-right: 12px;
-      border: 2px solid #65aadd;
-      box-shadow: 0 0 10px #65aadd88;
-      transition: transform 0.3s ease;
-    }
-    .pfp:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 20px #65aaddcc;
-    }
-    .UserTag {
-      font-size: 22px;
-      font-weight: 600;
-      color: #aad4ff;
-      text-shadow: 0 0 6px #65aaddbb;
-      margin-right: 15px;
-      user-select: none;
-      white-space: nowrap;
-    }
-    #authButtons {
-      display: flex;
-      gap: 15px;
-    }
-    .btn {
-      background-color: #65aadd;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 25px;
-      font-size: 18px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-      box-shadow: 0 0 10px #65aaddaa;
-      user-select: none;
-    }
-    .btn:hover {
-      background-color: #4e8ecc;
-      box-shadow: 0 0 20px #4e8ecccc;
-      transform: translateY(-2px);
-    }
-    .btn:active {
-      transform: scale(0.95);
-    }
-    h1 {
-      margin: 100px 30px 40px 30px; /* account for fixed nav */
-      color: #aad4ff;
-      text-shadow: 0 0 8px #65aaddcc;
-      user-select: none;
-      text-align: center;
+      flex-wrap: wrap;
     }
 
-    /* Container for the big info boxes */
-    .big-box {
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: #ffffff;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+      color: #00ffff;
+      border-color: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+
+    .nav-links a:hover::before {
+      left: 100%;
+    }
+
+    .nav-links a:hover {
+      color: #00ffff;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 120px 0 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.05) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      animation: rotate 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(45deg, #ffffff, #00ffff, #0080ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+      to { text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 128, 255, 0.5); }
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: #b3b3b3;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 30px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
       width: 100%;
-      max-width: 1200px;
-      background: rgba(30, 50, 70, 0.8);
-      margin: 0 auto 40px auto;
-      border-radius: 15px;
-      box-shadow: 0 0 20px #65aaddbb;
-      padding: 40px 60px;
-      box-sizing: border-box;
-      color: #aad4ff;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
-      cursor: default;
-      user-select: none;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
     }
-    .big-box:hover {
-      background: rgba(40, 70, 110, 0.95);
-      box-shadow: 0 0 35px #65aaddee;
-      transform: translateY(-8px);
+
+    .btn-primary:hover::before {
+      left: 100%;
     }
-    .big-box h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 28px;
-      font-weight: 700;
-      text-shadow: 0 0 10px #65aaddcc;
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 255, 0.5);
     }
-    .big-box p, 
-    .big-box ul {
-      font-size: 18px;
-      line-height: 1.5;
-      color: #cde6ff;
-      margin: 0;
-    }
-    .big-box ul {
-      padding-left: 25px;
-      margin-top: 10px;
-    }
-    .big-box ul li {
-      margin-bottom: 10px;
-    }
-    .version-info {
-      font-weight: 700;
-      font-size: 22px;
-      color: #83baff;
-      margin-bottom: 20px;
-      user-select: text;
-    }
-    /* Scrollbar for updates list if too long */
-    .updates-list {
-      max-height: 200px;
-      overflow-y: auto;
-      padding-left: 20px;
-      margin-top: 10px;
-      color: #cde6ff;
-    }
-    .updates-list li {
-      margin-bottom: 8px;
-    }
-    .updates-list::-webkit-scrollbar {
-      width: 8px;
-    }
-    .updates-list::-webkit-scrollbar-thumb {
-      background-color: #65aadd88;
-      border-radius: 4px;
-    }
-    .updates-list::-webkit-scrollbar-track {
+
+    .btn-secondary {
       background: transparent;
+      color: #00ffff;
+      border: 2px solid #00ffff;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+    }
+
+    .features {
+      padding: 80px 0;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .features h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 3rem;
+      color: #00ffff;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+      transform: rotate(45deg);
+      transition: all 0.3s ease;
+      opacity: 0;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+      animation: shine 0.5s ease-in-out;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+      border-color: rgba(0, 255, 255, 0.5);
+    }
+
+    .feature-card h3 {
+      color: #00ffff;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .feature-card p {
+      color: #b3b3b3;
+      line-height: 1.6;
+    }
+
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid rgba(0, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .footer-content {
+      color: #b3b3b3;
     }
 
     @media (max-width: 768px) {
-      .big-box {
-        padding: 30px 20px;
-        margin-bottom: 30px;
+      .hero h1 {
+        font-size: 2.5rem;
       }
-      h1 {
-        margin: 90px 20px 30px 20px;
-        font-size: 28px;
+
+      .nav-links {
+        display: none;
       }
-      .big-box h2 {
-        font-size: 24px;
+
+      .btn {
+        display: block;
+        margin: 10px auto;
+        width: 200px;
       }
     }
-    @media (max-width: 400px) {
-      h1 {
-        font-size: 24px;
-        margin: 80px 15px 25px 15px;
-      }
-      .big-box {
-        padding: 20px 15px;
-      }
-      .big-box p, .big-box ul {
-        font-size: 16px;
-      }
+
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
     }
-    .content {
-    flex: 1 0 auto;
-    width: 100%;
-    background: transparent;
-    margin: 40px 0 20px;
-    padding: 0; /* remove internal padding so inner elements control spacing */
-  }
 
-  /* Footer styles */
-  .footer {
-    flex-shrink: 0; /* Prevent footer from shrinking */
-    background: #1c1f26;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.6);
-    border-top: 1px solid #333;
-  }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #00ffff;
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
 
-  .footer a {
-    background: #00bcd4;
-    color: #fff;
-    padding: 10px 24px;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 14px;
-    transition: background 0.3s ease;
-  }
-
-  .footer a:hover {
-    background: #0097a7;
-  }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 1; }
+      50% { transform: translateY(-20px) rotate(180deg); opacity: 0.5; }
+    }
   </style>
 </head>
 <body>
-<div class="content">
-  <nav class="Nav">
-    <div class="user-info" id="userInfo" style="display:none;">
-      <img src="" alt="User Profile" class="pfp" id="userPfp" />
-      <span class="UserTag" id="userTag"></span>
-    </div>
-    <div id="authButtons">
-      <button class="btn" id="loginBtn">Login</button>
-      <button class="btn" id="dashboardBtn">Dashboard</button>
+  <div class="particles" id="particles"></div>
+
+  <nav>
+    <div class="container">
+      <div class="nav-content">
+        <div class="logo">HORIZON</div>
+        <ul class="nav-links">
+          <li><a href="#home">Home</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="https://backend-js-3uce.onrender.com/login">Dashboard</a></li>
+          <li><a href="#support">Support</a></li>
+        </ul>
+        <a href="https://backend-js-3uce.onrender.com/login" class="btn btn-secondary" style="margin-top: 8px;">Login</a>
+      </div>
     </div>
   </nav>
 
-  <h1>Horizon Discord Bot</h1>
+  <main>
+    <section class="hero" id="home">
+      <div class="container">
+        <div class="hero-content">
+          <h1>HORIZON BOT</h1>
+          <p>The Ultimate ERLC Discord Bot - Enhance your server with powerful moderation tools, role synchronization, and advanced shift management features.</p>
+          <div class="hero-buttons">
+            <a href="#" class="btn btn-primary">Invite to Discord</a>
+            <a href="/backend/login" class="btn btn-secondary">Open Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <section class="big-box" id="botInfoBox">
-    <h2>About Horizon Bot</h2>
-    <p>Horizon is a powerful and versatile Discord bot designed to improve your server experience with a wide range of features, from moderation tools to interactive commands.</p>
-    <ul>
-      <li>Shift Management: Manage your shift with commands or on the dashboard</li>
-      <li>ERLC loggin: Log's from ingame to your discord server</li>
-      <li>Custom Commands: Make your own commands to use inside of your server(Coming Soon)</li>
-      <li>Moderation: ban, kick, mute commands with role management</li>
-      <li>Welcome messages with customizable templates</li>
-      <li>Music playback support with playlists and queues</li>
-      <li>Reaction roles and giveaways to boost engagement</li>
-      <li>Advanced logging and analytics to monitor your server</li>
-    </ul>
-  </section>
+    <section class="features" id="features">
+      <div class="container">
+        <h2>Powerful Features</h2>
+        <div class="features-grid">
+          <div class="feature-card"><h3>Advanced Moderation</h3><p>Comprehensive moderation tools with auto-moderation, warning systems, and detailed logging to keep your server safe and organized.</p></div>
+          <div class="feature-card"><h3>Role Synchronization</h3><p>Seamlessly sync roles between your ERLC game and Discord server, ensuring proper permissions and access control.</p></div>
+          <div class="feature-card"><h3>Shift Management</h3><p>Track duty shifts, manage schedules, and monitor activity with our integrated shift management system.</p></div>
+          <div class="feature-card"><h3>Real-time Analytics</h3><p>Get detailed insights into server activity, user engagement, and moderation statistics with our dashboard.</p></div>
+          <div class="feature-card"><h3>Custom Commands</h3><p>Create and customize commands tailored to your server's needs with our flexible command builder.</p></div>
+          <div class="feature-card"><h3>24/7 Uptime</h3><p>Reliable service with 99.9% uptime guarantee, ensuring your bot is always ready when you need it.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-  <section class="big-box" id="versionBox">
-    <h2>Version & Updates</h2>
-    <div class="version-info" id="botVersion">Version 1.0.0</div>
-    <p>Latest updates:</p>
-    <ul class="updates-list">
-      <li>v1.0.0 - Initial release with core features.</li>
-      <li>v1.1.0 - Added music playback commands and improved UI.</li>
-      <li>v1.2.0 - Introduced giveaways and reaction roles.</li>
-      <li>v1.3.0 - Bug fixes and performance improvements.</li>
-    </ul>
-  </section>
-  </div>
-
-  <footer class="footer">
-    <a href="ToS.html" aria-label="Terms of Service">Terms of Service</a>
-    <a href="privacy.html" aria-label="Privacy Policy">Privacy Policy</a>
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; 2024 Horizon Bot. All rights reserved. | Built for the ERLC community</p>
+      </div>
+    </div>
   </footer>
 
   <script>
-    const loginBtn = document.getElementById('loginBtn');
-    const dashboardBtn = document.getElementById('dashboardBtn');
-    const userInfo = document.getElementById('userInfo');
-    const userPfp = document.getElementById('userPfp');
-    const userTag = document.getElementById('userTag');
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 50;
 
-    // Assume you store this info in localStorage after OAuth backend login
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const username = localStorage.getItem('username');
-    const pfpUrl = localStorage.getItem('pfp'); // store Discord avatar URL
-
-    // Update UI if logged in
-    if (isLoggedIn && username && pfpUrl) {
-      userInfo.style.display = 'flex';
-      userPfp.src = pfpUrl;
-      userTag.textContent = username;
-      loginBtn.textContent = 'Logout';
-    } else {
-      userInfo.style.display = 'none';
-      loginBtn.textContent = 'Login';
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 6 + 's';
+        particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+        particlesContainer.appendChild(particle);
+      }
     }
 
-    // Backend OAuth login URL - replace with your actual backend login route
-    const backendLoginUrl = 'https://backend-js-3uce.onrender.com/login';
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
 
-    loginBtn.onclick = () => {
-      if (isLoggedIn) {
-        // Logout: clear localStorage and reload page
-        localStorage.clear();
-        window.location.reload();
-      } else {
-        // Not logged in → redirect to backend OAuth login
-        window.location.href = backendLoginUrl;
-      }
-    };
+    window.addEventListener('load', createParticles);
 
-    dashboardBtn.onclick = () => {
-      if (isLoggedIn) {
-        // Redirect to dashboard page with data if needed (or just open page)
-        window.location.href = 'DashboardDiscovery.html';
-      } else {
-        // Not logged in → redirect to backend OAuth login
-        window.location.href = backendLoginUrl;
-      }
-    };
+    document.addEventListener('mousemove', (e) => {
+      const hero = document.querySelector('.hero');
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      hero.style.background = `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(0, 255, 255, 0.1) 0%, transparent 50%)`;
+    });
   </script>
 </body>
 </html>
