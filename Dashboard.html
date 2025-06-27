@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ER:LC Bot Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horizon Bot - Settings</title>
   <style>
     body {
       margin: 0;
@@ -16,123 +16,114 @@
     }
 
     nav.Nav {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 15px 25px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      padding: 16px 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      backdrop-filter: blur(10px);
     }
 
     .back-btn {
       position: absolute;
       left: 20px;
-      background: #65aadd;
-      border: none;
+      background-color: #65aadd;
       color: white;
-      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
       font-size: 14px;
-      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background-color 0.3s ease;
     }
 
     .back-btn:hover {
-      background: #4e8ecc;
+      background-color: #4e8ecc;
     }
 
-    .logo-text {
-      font-size: 20px;
+    .logo {
+      font-size: 22px;
       font-weight: bold;
       color: #aad4ff;
-      text-shadow: 0 0 8px #65aaddaa;
+      text-shadow: 0 0 6px #65aaddaa;
     }
 
     main {
-      flex-grow: 1;
       padding: 30px 20px;
-      max-width: 800px;
+      flex-grow: 1;
+      max-width: 1000px;
       margin: auto;
     }
 
     h2 {
       color: #aad4ff;
-      border-bottom: 2px solid #65aadd66;
-      padding-bottom: 10px;
+      font-size: 28px;
       margin-bottom: 20px;
+      text-shadow: 0 0 8px #65aadd88;
     }
 
-    .setting {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 16px;
+    .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 0 10px #65aadd33;
     }
 
-    .setting span {
+    .setting-card span {
       font-size: 16px;
-      font-weight: 600;
-      color: #ffffffcc;
-      text-transform: capitalize;
+      font-weight: 500;
     }
 
-    .setting button,
-    .setting input {
+    .setting-card button,
+    .setting-card input {
       background: #34495e;
       color: white;
       border: none;
       border-radius: 6px;
-      padding: 8px 16px;
+      padding: 6px 14px;
       font-size: 14px;
-      transition: background 0.2s ease;
+      transition: background-color 0.3s ease;
     }
 
-    .setting button:hover {
+    .setting-card button:hover {
       background: #2980b9;
     }
 
-    input[type="text"] {
-      width: 220px;
-    }
-
-    .status {
-      color: #ccc;
-      text-align: center;
-      font-style: italic;
-      margin-top: 40px;
+    .setting-card input[type="text"] {
+      width: 200px;
+      outline: none;
     }
   </style>
 </head>
 <body>
-
   <nav class="Nav">
-    <button class="back-btn" onclick="history.back()">← Back</button>
-    <div class="logo-text">Horizon Bot</div>
+    <button class="back-btn" onclick="window.history.back()">&larr; Back</button>
+    <div class="logo">Horizon Settings</div>
   </nav>
 
   <main>
     <h2>Bot Settings</h2>
-    <div id="settings-container" class="settings">
+    <div class="settings-grid" id="settings-container">
       Loading settings...
     </div>
   </main>
 
   <script>
-    const BACKEND_URL = "https://your-backend-url.com"; // Replace with your backend
-
     const toggleValues = {
-      "on": "off",
-      "off": "on",
-      "enabled": "disabled",
-      "disabled": "enabled",
-      "online": "offline",
-      "offline": "online"
+      "on": "off", "off": "on",
+      "enabled": "disabled", "disabled": "enabled",
+      "true": "false", "false": "true"
     };
 
     const settingsSchema = {
@@ -149,45 +140,82 @@
     let guildId = null;
     let currentSettings = {};
 
-    function getQueryParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
+    function getGuildIdFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("guild");
     }
 
     function createSettingElement(key, value) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "setting";
+      const card = document.createElement("div");
+      card.className = "setting-card";
 
       const label = document.createElement("span");
-      label.textContent = key.replace(/_/g, " ");
+      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
-      wrapper.appendChild(label);
+      card.appendChild(label);
 
       if (settingsSchema[key] === "button") {
         const btn = document.createElement("button");
         btn.textContent = value.charAt(0).toUpperCase() + value.slice(1);
-        btn.dataset.key = key;
-        btn.dataset.value = value;
         btn.onclick = () => {
-          const newVal = toggleValues[btn.dataset.value] || btn.dataset.value;
+          const newVal = toggleValues[value.toLowerCase()] || value;
           btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
-          btn.dataset.value = newVal;
           currentSettings[key] = newVal;
           sendAllSettings();
+          value = newVal;
         };
-        wrapper.appendChild(btn);
+        card.appendChild(btn);
       } else if (settingsSchema[key] === "input") {
         const input = document.createElement("input");
         input.type = "text";
         input.value = value;
-        input.dataset.key = key;
         input.onblur = () => {
           currentSettings[key] = input.value;
           sendAllSettings();
         };
-        wrapper.appendChild(input);
+        card.appendChild(input);
       }
 
-      return wrapper;
+      return card;
+    }
+
+    async function loadSettings() {
+      guildId = getGuildIdFromURL();
+      const container = document.getElementById("settings-container");
+
+      if (!guildId) {
+        container.textContent = "Missing Guild ID in URL (?guild=123...).";
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://your-api-url.com/get_settings?guild=${guildId}`);
+        const json = await res.json();
+
+        if (!json || json.error) {
+          container.textContent = "No settings found. Loading defaults...";
+          currentSettings = getDefaultSettings();
+        } else {
+          currentSettings = { ...getDefaultSettings(), ...json };
+        }
+
+        renderSettings(currentSettings);
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+        container.textContent = "Error loading settings.";
+      }
+    }
+
+    function renderSettings(settings) {
+      const container = document.getElementById("settings-container");
+      container.innerHTML = "";
+
+      Object.entries(settingsSchema).forEach(([key, type]) => {
+        const value = settings[key] ?? getDefaultForType(type);
+        currentSettings[key] = value;
+        const el = createSettingElement(key, value);
+        container.appendChild(el);
+      });
     }
 
     function getDefaultForType(type) {
@@ -202,52 +230,24 @@
       return defaults;
     }
 
-    async function loadSettings() {
-      guildId = getQueryParam("guild");
-      if (!guildId) {
-        document.getElementById("settings-container").innerHTML = `<div class="status">Missing guild ID in URL.</div>`;
-        return;
-      }
-
-      try {
-        const res = await fetch(`${BACKEND_URL}/get_settings?guild=${guildId}`);
-        const data = await res.json();
-        currentSettings = { ...getDefaultSettings(), ...data };
-        renderSettings(currentSettings);
-      } catch (err) {
-        console.error("Failed to load settings:", err);
-        document.getElementById("settings-container").innerHTML = `<div class="status">Failed to load settings.</div>`;
-      }
-    }
-
-    function renderSettings(settings) {
-      const container = document.getElementById("settings-container");
-      container.innerHTML = "";
-
-      for (const [key, type] of Object.entries(settingsSchema)) {
-        const val = settings[key] ?? getDefaultForType(type);
-        currentSettings[key] = val;
-        container.appendChild(createSettingElement(key, val));
-      }
-    }
-
     async function sendAllSettings() {
+      const payload = {
+        guild: guildId,
+        settings: currentSettings
+      };
+
       try {
-        await fetch(`${BACKEND_URL}/update_setting`, {
+        await fetch("https://your-api-url.com/update_setting", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            guild: guildId,
-            settings: currentSettings
-          })
+          body: JSON.stringify(payload)
         });
-      } catch (err) {
-        console.error("Failed to update settings:", err);
+      } catch (e) {
+        console.error("Failed to update settings:", e);
       }
     }
 
     window.addEventListener("DOMContentLoaded", loadSettings);
   </script>
-
 </body>
 </html>
