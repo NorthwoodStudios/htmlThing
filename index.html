@@ -310,6 +310,24 @@
       0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 1; }
       50% { transform: translateY(-20px) rotate(180deg); opacity: 0.5; }
     }
+    .thin-button {
+      font-size: 13px;
+      padding: 4px 10px;
+      border: 1px solid #00ffff;
+      background: transparent;
+      color: #00ffff;
+      border-radius: 20px;
+      text-decoration: none;
+      transition: all 0.25s ease-in-out;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .thin-button:hover {
+      background: rgba(0, 255, 255, 0.1);
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -363,6 +381,7 @@
     <div class="container">
       <div class="footer-content">
         <p>&copy; 2024 Horizon Bot. All rights reserved. | Built for the ERLC community</p>
+        <p><a href="Privacy.html" class="Thin-button">Privacy Policy</a> | <a href="ToS.html"class="Thin-button">Terms of Service</a></p>
       </div>
     </div>
   </footer>
