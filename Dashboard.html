@@ -274,14 +274,12 @@
   </main>
 
 <script>
-  // Toggle values map for button toggles
   const toggleValues = {
     "on": "off", "off": "on",
     "enabled": "disabled", "disabled": "enabled",
     "true": "false", "false": "true"
   };
 
-  // Settings schema with their input types
   const settingsSchema = {
     bot_status: "button",
     prefix: "input",
@@ -303,34 +301,26 @@
   let currentSettings = {};
   let currentSettingKey = null;
 
-  // Get guild from URL param
   function getGuildIdFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get("guild");
   }
 
-  // Toggle sidebar sections open/close
   function toggleSection(header) {
     const ul = header.nextElementSibling;
-    if (!ul) return;
-    ul.classList.toggle("show");
+    if (ul) ul.classList.toggle("show");
   }
 
-  // Highlight the selected sidebar item
   function highlightSelected(li) {
-    document.querySelectorAll('nav.sidebar li').forEach(item => {
-      item.classList.remove("active");
-    });
+    document.querySelectorAll('nav.sidebar li').forEach(item => item.classList.remove("active"));
     li.classList.add("active");
   }
 
-  // Create a setting input card depending on type
   function createSettingElement(key, value) {
     const card = document.createElement("div");
     card.className = "setting-card";
 
     const label = document.createElement("span");
-    // Format label nicely
     label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
     card.appendChild(label);
 
@@ -339,10 +329,10 @@
 
     if (settingsSchema[key] === "button") {
       const btn = document.createElement("button");
-      btn.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+      btn.textContent = capitalize(value);
       btn.onclick = () => {
         const newVal = toggleValues[value.toLowerCase()] || value;
-        btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
+        btn.textContent = capitalize(newVal);
         currentSettings[key] = newVal;
         value = newVal;
         sendAllSettings();
@@ -358,8 +348,8 @@
         sendAllSettings();
       };
       card.appendChild(input);
+
     } else {
-      // fallback: show value text
       const spanVal = document.createElement("span");
       spanVal.textContent = value;
       card.appendChild(spanVal);
@@ -368,23 +358,34 @@
     return card;
   }
 
-  // Load all settings from API and merge defaults
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   async function loadAllSettings() {
     if (!guildId) return;
+
     try {
       const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
+      if (!res.ok) {
+        console.warn("Failed to load settings: Server returned", res.status);
+        currentSettings = getDefaultSettings();
+        return;
+      }
+
       const json = await res.json();
+      console.log("Loaded settings:", json);
       currentSettings = { ...getDefaultSettings(), ...json };
     } catch (e) {
-      console.error("Failed to load settings:", e);
+      console.error("Error fetching settings:", e);
       currentSettings = getDefaultSettings();
     }
   }
 
-  // Render only the selected setting card
   function renderSetting(key) {
     const container = document.getElementById("settings-container");
     container.innerHTML = "";
+
     const sectionTitle = document.getElementById("section-title");
     sectionTitle.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
@@ -395,12 +396,10 @@
     container.appendChild(el);
   }
 
-  // Default value based on type
   function getDefaultForType(type) {
     return type === "input" ? "" : "off";
   }
 
-  // Default settings with all keys set to default values
   function getDefaultSettings() {
     const defaults = {};
     for (const [key, type] of Object.entries(settingsSchema)) {
@@ -409,7 +408,6 @@
     return defaults;
   }
 
-  // Send currentSettings to server
   async function sendAllSettings() {
     if (!guildId) return;
 
@@ -419,18 +417,20 @@
     };
 
     try {
-      await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
+      const res = await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      // Optional: show a success message or update UI
+
+      if (!res.ok) {
+        console.warn("Failed to update settings:", res.status);
+      }
     } catch (e) {
-      console.error("Failed to update settings:", e);
+      console.error("Error sending settings:", e);
     }
   }
 
-  // Sidebar click handler
   async function onSidebarClick(e) {
     const li = e.target.closest("li");
     if (!li) return;
@@ -438,26 +438,18 @@
     highlightSelected(li);
     currentSettingKey = li.dataset.key;
 
-    // Load latest from server before showing
     await loadAllSettings();
     renderSetting(currentSettingKey);
   }
 
-  // Initialize sidebar event listeners and expand first section
   function initSidebar() {
     document.querySelectorAll("nav.sidebar .section h3").forEach(h3 => {
-      h3.addEventListener("click", () => {
-        const ul = h3.nextElementSibling;
-        if (!ul) return;
-        ul.classList.toggle("show");
-      });
+      h3.addEventListener("click", () => toggleSection(h3));
     });
 
-    // Expand first section by default
     const firstUl = document.querySelector("nav.sidebar .section ul");
     if (firstUl) firstUl.classList.add("show");
 
-    // Attach click listeners to all li
     document.querySelectorAll("nav.sidebar li").forEach(li => {
       li.addEventListener("click", onSidebarClick);
     });
@@ -466,17 +458,22 @@
   async function main() {
     guildId = getGuildIdFromURL();
     if (!guildId) {
-      alert("Guild ID not found in URL query parameters.");
+      alert("Guild ID not found in URL.");
+      console.error("Missing 'guild' parameter in URL.");
       return;
     }
+
     initSidebar();
-    await loadAllSettings();
-    // Optional: pre-select first setting
+
+    // Load and show first setting by default
     const firstLi = document.querySelector("nav.sidebar li");
     if (firstLi) {
-      firstLi.classList.add("active");
+      highlightSelected(firstLi);
       currentSettingKey = firstLi.dataset.key;
+      await loadAllSettings();
       renderSetting(currentSettingKey);
+    } else {
+      console.warn("No settings found in sidebar.");
     }
   }
 
