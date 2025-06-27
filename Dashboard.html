@@ -139,129 +139,133 @@
     <div class="settings-grid" id="settings-container">Loading settings...</div>
   </main>
 
-  <script>
-    const toggleValues = {
-      "on": "off", "off": "on",
-      "enabled": "disabled", "disabled": "enabled",
-      "true": "false", "false": "true"
-    };
+ <script>
+  const toggleValues = {
+    "on": "off", "off": "on",
+    "enabled": "disabled", "disabled": "enabled",
+    "true": "false", "false": "true"
+  };
 
-    const settingsSchema = {
-      bot_status: "button",
-      prefix: "input",
-      antispam_enabled: "button",
-      badword_filter: "button",
-      anti_raid: "button",
-      kick_on_bot_join: "button",
-      log_channel_id: "input",
-      log_bans: "button"
-    };
+  const settingsSchema = {
+    bot_status: "button",
+    prefix: "input",
+    antispam_enabled: "button",
+    badword_filter: "button",
+    anti_raid: "button",
+    kick_on_bot_join: "button",
+    log_channel_id: "input",
+    log_bans: "button"
+  };
 
-    let guildId = null;
-    let currentSettings = {};
+  let guildId = null;
+  let currentSettings = {};
 
-    function getGuildIdFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("guild");
-    }
+  function getGuildIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("guild");
+  }
 
-    function createSettingElement(key, value) {
-      const card = document.createElement("div");
-      card.className = "setting-card";
+  function createSettingElement(key, value) {
+    const card = document.createElement("div");
+    card.className = "setting-card";
 
-      const label = document.createElement("span");
-      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    const label = document.createElement("span");
+    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
-      card.appendChild(label);
+    card.appendChild(label);
 
-      if (settingsSchema[key] === "button") {
-        const btn = document.createElement("button");
-        btn.textContent = value.charAt(0).toUpperCase() + value.slice(1);
-        btn.onclick = () => {
-          const newVal = toggleValues[value.toLowerCase()] || value;
-          btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
-          currentSettings[key] = newVal;
-          sendAllSettings();
-          value = newVal;
-        };
-        card.appendChild(btn);
-      } else if (settingsSchema[key] === "input") {
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = value;
-        input.onblur = () => {
-          currentSettings[key] = input.value;
-          sendAllSettings();
-        };
-        card.appendChild(input);
-      }
+    // Ensure value is a string for safe charAt usage
+    if (value === null || value === undefined) value = "";
+    if (typeof value !== "string") value = String(value);
 
-      return card;
-    }
-
-    async function loadSettings() {
-      guildId = getGuildIdFromURL();
-      const container = document.getElementById("settings-container");
-
-      if (!guildId) {
-        container.textContent = "Missing Guild ID in URL (?guild=123...)";
-        return;
-      }
-
-      try {
-        const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
-        const json = await res.json();
-
-        currentSettings = { ...getDefaultSettings(), ...json };
-        renderSettings(currentSettings);
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-        container.textContent = "Error loading settings.";
-      }
-    }
-
-    function renderSettings(settings) {
-      const container = document.getElementById("settings-container");
-      container.innerHTML = "";
-
-      Object.entries(settingsSchema).forEach(([key, type]) => {
-        const value = settings[key] ?? getDefaultForType(type);
-        currentSettings[key] = value;
-        const el = createSettingElement(key, value);
-        container.appendChild(el);
-      });
-    }
-
-    function getDefaultForType(type) {
-      return type === "input" ? "" : "off";
-    }
-
-    function getDefaultSettings() {
-      const defaults = {};
-      for (const [key, type] of Object.entries(settingsSchema)) {
-        defaults[key] = getDefaultForType(type);
-      }
-      return defaults;
-    }
-
-    async function sendAllSettings() {
-      const payload = {
-        guild: guildId,
-        settings: currentSettings
+    if (settingsSchema[key] === "button") {
+      const btn = document.createElement("button");
+      btn.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+      btn.onclick = () => {
+        const newVal = toggleValues[value.toLowerCase()] || value;
+        btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
+        currentSettings[key] = newVal;
+        sendAllSettings();
+        value = newVal;
       };
-
-      try {
-        await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {
-        console.error("Failed to update settings:", e);
-      }
+      card.appendChild(btn);
+    } else if (settingsSchema[key] === "input") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.onblur = () => {
+        currentSettings[key] = input.value;
+        sendAllSettings();
+      };
+      card.appendChild(input);
     }
 
-    window.addEventListener("DOMContentLoaded", loadSettings);
-  </script>
+    return card;
+  }
+
+  async function loadSettings() {
+    guildId = getGuildIdFromURL();
+    const container = document.getElementById("settings-container");
+
+    if (!guildId) {
+      container.textContent = "Missing Guild ID in URL (?guild=123...)";
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
+      const json = await res.json();
+
+      currentSettings = { ...getDefaultSettings(), ...json };
+      renderSettings(currentSettings);
+    } catch (e) {
+      console.error("Failed to load settings:", e);
+      container.textContent = "Error loading settings.";
+    }
+  }
+
+  function renderSettings(settings) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+
+    Object.entries(settingsSchema).forEach(([key, type]) => {
+      const value = settings[key] ?? getDefaultForType(type);
+      currentSettings[key] = value;
+      const el = createSettingElement(key, value);
+      container.appendChild(el);
+    });
+  }
+
+  function getDefaultForType(type) {
+    return type === "input" ? "" : "off";
+  }
+
+  function getDefaultSettings() {
+    const defaults = {};
+    for (const [key, type] of Object.entries(settingsSchema)) {
+      defaults[key] = getDefaultForType(type);
+    }
+    return defaults;
+  }
+
+  async function sendAllSettings() {
+    const payload = {
+      guild: guildId,
+      settings: currentSettings
+    };
+
+    try {
+      await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      console.error("Failed to update settings:", e);
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", loadSettings);
+</script>
 </body>
 </html>
