@@ -7,30 +7,79 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f2027;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: #f0f4f8;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    nav.Nav {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 20px;
+      background: #65aadd;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: #4e8ecc;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: bold;
+      color: #aad4ff;
+      text-shadow: 0 0 8px #65aaddaa;
+    }
+
+    main {
+      flex-grow: 1;
+      padding: 30px 20px;
+      max-width: 800px;
+      margin: auto;
     }
 
     h2 {
       color: #aad4ff;
-      border-bottom: 1px solid #445;
-      padding-bottom: 8px;
+      border-bottom: 2px solid #65aadd66;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
     }
 
     .setting {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #1c2e3a;
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .setting span {
-      flex: 1;
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffffcc;
+      text-transform: capitalize;
     }
 
     .setting button,
@@ -38,9 +87,10 @@
       background: #34495e;
       color: white;
       border: none;
-      border-radius: 5px;
-      padding: 6px 12px;
-      cursor: pointer;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 14px;
+      transition: background 0.2s ease;
     }
 
     .setting button:hover {
@@ -48,160 +98,156 @@
     }
 
     input[type="text"] {
-      width: 200px;
+      width: 220px;
+    }
+
+    .status {
+      color: #ccc;
+      text-align: center;
+      font-style: italic;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Bot Settings</h2>
-  <div id="settings-container">
-    Loading settings...
-  </div>
+  <nav class="Nav">
+    <button class="back-btn" onclick="history.back()">← Back</button>
+    <div class="logo-text">Horizon Bot</div>
+  </nav>
+
+  <main>
+    <h2>Bot Settings</h2>
+    <div id="settings-container" class="settings">
+      Loading settings...
+    </div>
+  </main>
 
   <script>
-  const toggleValues = {
-    "on": "off",
-    "off": "on",
-    "enabled": "disabled",
-    "disabled": "enabled",
-    "online": "offline",
-    "offline": "online"
-  };
+    const BACKEND_URL = "https://your-backend-url.com"; // Replace with your backend
 
-  // Schema keys exactly matching your backend keys
-  const settingsSchema = {
-    bot_status: "button",          // if backend provides this
-    prefix: "input",               // backend key is "prefix"
-    antispam_enabled: "button",
-    badword_filter: "button",
-    anti_raid: "button",
-    kick_on_bot_join: "button",
-    log_channel_id: "input",
-    log_bans: "button"
-  };
-
-  let guildId = null;
-  let currentSettings = {};
-
-  function getGuildIdFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("guild");
-  }
-
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  function createSettingElement(key, value) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "setting";
-
-    const label = document.createElement("span");
-    // Make the label pretty
-    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-
-    wrapper.appendChild(label);
-
-    if (settingsSchema[key] === "button") {
-      const btn = document.createElement("button");
-      btn.textContent = capitalize(value);
-      btn.dataset.key = key;
-      btn.dataset.value = value;
-      btn.onclick = () => {
-        const newVal = toggleValues[btn.dataset.value] || btn.dataset.value;
-        btn.textContent = capitalize(newVal);
-        btn.dataset.value = newVal;
-        currentSettings[key] = newVal;
-        sendAllSettings();
-      };
-      wrapper.appendChild(btn);
-    } else if (settingsSchema[key] === "input") {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = value;
-      input.dataset.key = key;
-      input.onblur = () => {
-        currentSettings[key] = input.value;
-        sendAllSettings();
-      };
-      wrapper.appendChild(input);
-    }
-
-    return wrapper;
-  }
-
-  async function loadSettings() {
-    guildId = getGuildIdFromURL();
-    const container = document.getElementById("settings-container");
-
-    if (!guildId) {
-      container.textContent = "Missing Guild ID in URL (?guild=123...).";
-      return;
-    }
-
-    try {
-      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`); // change URL to your backend endpoint
-      const json = await res.json();
-      console.log("Settings response:", json);
-
-      if (!json || json.error) {
-        container.textContent = "No settings found. Loading defaults...";
-        currentSettings = getDefaultSettings();
-      } else {
-        // Merge defaults with backend response, backend response keys match schema
-        currentSettings = { ...getDefaultSettings(), ...json };
-      }
-
-      renderSettings(currentSettings);
-    } catch (e) {
-      console.error("Failed to load settings:", e);
-      container.textContent = "Error loading settings.";
-    }
-  }
-
-  function renderSettings(settings) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
-
-    Object.entries(settingsSchema).forEach(([key, type]) => {
-      const value = settings[key] ?? getDefaultForType(type);
-      currentSettings[key] = value;
-      const el = createSettingElement(key, value);
-      container.appendChild(el);
-    });
-  }
-
-  function getDefaultForType(type) {
-    return type === "input" ? "" : "off";
-  }
-
-  function getDefaultSettings() {
-    const defaults = {};
-    for (const [key, type] of Object.entries(settingsSchema)) {
-      defaults[key] = getDefaultForType(type);
-    }
-    return defaults;
-  }
-
-  async function sendAllSettings() {
-    const payload = {
-      guild: guildId,
-      settings: currentSettings
+    const toggleValues = {
+      "on": "off",
+      "off": "on",
+      "enabled": "disabled",
+      "disabled": "enabled",
+      "online": "offline",
+      "offline": "online"
     };
 
-    try {
-      await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {  // change URL to your backend endpoint
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      console.error("Failed to send settings:", e);
-    }
-  }
+    const settingsSchema = {
+      bot_status: "button",
+      prefix: "input",
+      antispam_enabled: "button",
+      badword_filter: "button",
+      anti_raid: "button",
+      kick_on_bot_join: "button",
+      log_channel_id: "input",
+      log_bans: "button"
+    };
 
-  window.addEventListener("DOMContentLoaded", loadSettings);
+    let guildId = null;
+    let currentSettings = {};
+
+    function getQueryParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function createSettingElement(key, value) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "setting";
+
+      const label = document.createElement("span");
+      label.textContent = key.replace(/_/g, " ");
+
+      wrapper.appendChild(label);
+
+      if (settingsSchema[key] === "button") {
+        const btn = document.createElement("button");
+        btn.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+        btn.dataset.key = key;
+        btn.dataset.value = value;
+        btn.onclick = () => {
+          const newVal = toggleValues[btn.dataset.value] || btn.dataset.value;
+          btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
+          btn.dataset.value = newVal;
+          currentSettings[key] = newVal;
+          sendAllSettings();
+        };
+        wrapper.appendChild(btn);
+      } else if (settingsSchema[key] === "input") {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = value;
+        input.dataset.key = key;
+        input.onblur = () => {
+          currentSettings[key] = input.value;
+          sendAllSettings();
+        };
+        wrapper.appendChild(input);
+      }
+
+      return wrapper;
+    }
+
+    function getDefaultForType(type) {
+      return type === "input" ? "" : "off";
+    }
+
+    function getDefaultSettings() {
+      const defaults = {};
+      for (const [key, type] of Object.entries(settingsSchema)) {
+        defaults[key] = getDefaultForType(type);
+      }
+      return defaults;
+    }
+
+    async function loadSettings() {
+      guildId = getQueryParam("guild");
+      if (!guildId) {
+        document.getElementById("settings-container").innerHTML = `<div class="status">Missing guild ID in URL.</div>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/get_settings?guild=${guildId}`);
+        const data = await res.json();
+        currentSettings = { ...getDefaultSettings(), ...data };
+        renderSettings(currentSettings);
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+        document.getElementById("settings-container").innerHTML = `<div class="status">Failed to load settings.</div>`;
+      }
+    }
+
+    function renderSettings(settings) {
+      const container = document.getElementById("settings-container");
+      container.innerHTML = "";
+
+      for (const [key, type] of Object.entries(settingsSchema)) {
+        const val = settings[key] ?? getDefaultForType(type);
+        currentSettings[key] = val;
+        container.appendChild(createSettingElement(key, val));
+      }
+    }
+
+    async function sendAllSettings() {
+      try {
+        await fetch(`${BACKEND_URL}/update_setting`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            guild: guildId,
+            settings: currentSettings
+          })
+        });
+      } catch (err) {
+        console.error("Failed to update settings:", err);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", loadSettings);
   </script>
+
 </body>
 </html>
