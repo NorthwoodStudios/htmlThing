@@ -209,7 +209,7 @@
       }
 
       try {
-        const res = await fetch(`https://your-api-url.com/get_settings?guild=${guildId}`);
+        const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
         const json = await res.json();
 
         currentSettings = { ...getDefaultSettings(), ...json };
@@ -251,7 +251,7 @@
       };
 
       try {
-        await fetch("https://your-api-url.com/update_setting", {
+        await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
