@@ -11,8 +11,8 @@
       background: #0e1015;
       color: #f4f4f4;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     nav.Nav {
@@ -26,6 +26,8 @@
       justify-content: space-between;
       padding: 12px 20px;
       backdrop-filter: blur(12px);
+      width: 100%;
+      flex-shrink: 0;
     }
 
     .back-btn {
@@ -52,20 +54,92 @@
       user-select: none;
     }
 
-    main {
-      flex-grow: 1;
-      max-width: 900px;
-      margin: 30px auto 50px auto;
-      padding: 0 20px;
+    /* Sidebar styles */
+    nav.sidebar {
+      width: 280px;
+      background: #1c1f26;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 15px;
+      overflow-y: auto;
+      flex-shrink: 0;
     }
 
-    h1 {
+    nav.sidebar h2 {
+      color: #00bcd4;
+      margin-top: 0;
+      margin-bottom: 15px;
+      user-select: none;
+    }
+
+    nav.sidebar .section {
+      margin-bottom: 20px;
+      user-select: none;
+    }
+
+    nav.sidebar .section h3 {
+      cursor: pointer;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #aad4ff;
+      transition: color 0.2s ease;
+    }
+
+    nav.sidebar .section h3:hover {
+      color: #00bcd4;
+    }
+
+    nav.sidebar ul {
+      list-style: none;
+      padding-left: 15px;
+      margin: 0;
+      display: none;
+      user-select: none;
+    }
+
+    nav.sidebar ul.show {
+      display: block;
+    }
+
+    nav.sidebar li {
+      margin-bottom: 8px;
+      cursor: pointer;
+      color: #aad4ff;
+      transition: color 0.2s ease;
+      font-size: 15px;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    nav.sidebar li:hover {
+      color: #00bcd4;
+      background-color: #00bcd422;
+    }
+
+    nav.sidebar li.active {
+      color: #00bcd4;
+      font-weight: 700;
+      background-color: #00bcd433;
+    }
+
+    /* Main content styles */
+    main.content {
+      flex-grow: 1;
+      background: #0e1015;
+      overflow-y: auto;
+      padding: 30px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    main.content h1 {
       font-size: 28px;
       font-weight: 700;
       color: #00bcd4;
       text-shadow: 0 0 12px #00bcd4cc;
-      text-align: center;
       margin-bottom: 30px;
+      text-align: center;
     }
 
     .settings-grid {
@@ -116,16 +190,38 @@
       outline: none;
     }
 
-    @media (max-width: 480px) {
-      .setting-card {
+    @media (max-width: 900px) {
+      body {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
       }
-      .setting-card input[type="text"] {
+      nav.sidebar {
         width: 100%;
+        height: auto;
+        box-shadow: none;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px;
+      }
+      nav.sidebar .section {
+        margin-right: 30px;
+        margin-bottom: 0;
+      }
+      nav.sidebar ul {
+        display: flex !important;
+        padding-left: 0;
+        margin: 0;
+      }
+      nav.sidebar li {
+        margin-right: 15px;
+        margin-bottom: 0;
+      }
+      main.content {
+        max-width: 100%;
+        margin: 20px 0 50px 0;
+        padding: 20px 10px;
       }
     }
+
   </style>
 </head>
 <body>
@@ -134,47 +230,110 @@
     <div class="nav-center">Horizon Bot Settings</div>
   </nav>
 
-  <main>
-    <h1>Manage Bot Settings</h1>
-    <div class="settings-grid" id="settings-container">Loading settings...</div>
+  <nav class="sidebar" aria-label="Settings Navigation">
+    <h2>Settings</h2>
+
+    <div class="section">
+      <h3 onclick="toggleSection(this)">General Settings</h3>
+      <ul>
+        <li data-key="bot_status">Bot Activity (Premium)</li>
+        <li data-key="prefix">Prefix</li>
+        <li data-key="staff_roles">Staff Roles</li>
+        <li data-key="management_roles">Management Roles</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3 onclick="toggleSection(this)">Shift Management</h3>
+      <ul>
+        <li data-key="quota">Quota</li>
+        <li data-key="types">Types</li>
+        <li data-key="reset">Reset</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h3 onclick="toggleSection(this)">Logs</h3>
+      <ul>
+        <li data-key="main_logs">Main Logs</li>
+        <li data-key="shift_logs">Shift Logs</li>
+        <li data-key="punishment_logs">Punishment Logs</li>
+        <li data-key="log_bans">Ban Logs</li>
+        <li data-key="command_logs">Command Logs</li>
+        <li data-key="server_logs">Server Logs</li>
+        <li data-key="more_later">More Later</li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="content">
+    <h1 id="section-title">Select a setting</h1>
+    <div class="settings-grid" id="settings-container">
+      Please select a setting from the left menu.
+    </div>
   </main>
 
- <script>
+<script>
+  // Toggle values map for button toggles
   const toggleValues = {
     "on": "off", "off": "on",
     "enabled": "disabled", "disabled": "enabled",
     "true": "false", "false": "true"
   };
 
+  // Settings schema with their input types
   const settingsSchema = {
     bot_status: "button",
     prefix: "input",
-    antispam_enabled: "button",
-    badword_filter: "button",
-    anti_raid: "button",
-    kick_on_bot_join: "button",
-    log_channel_id: "input",
-    log_bans: "button"
+    staff_roles: "input",
+    management_roles: "input",
+    quota: "input",
+    types: "input",
+    reset: "button",
+    main_logs: "button",
+    shift_logs: "button",
+    punishment_logs: "button",
+    log_bans: "button",
+    command_logs: "button",
+    server_logs: "button",
+    more_later: "button"
   };
 
   let guildId = null;
   let currentSettings = {};
+  let currentSettingKey = null;
 
+  // Get guild from URL param
   function getGuildIdFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get("guild");
   }
 
+  // Toggle sidebar sections open/close
+  function toggleSection(header) {
+    const ul = header.nextElementSibling;
+    if (!ul) return;
+    ul.classList.toggle("show");
+  }
+
+  // Highlight the selected sidebar item
+  function highlightSelected(li) {
+    document.querySelectorAll('nav.sidebar li').forEach(item => {
+      item.classList.remove("active");
+    });
+    li.classList.add("active");
+  }
+
+  // Create a setting input card depending on type
   function createSettingElement(key, value) {
     const card = document.createElement("div");
     card.className = "setting-card";
 
     const label = document.createElement("span");
+    // Format label nicely
     label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-
     card.appendChild(label);
 
-    // Ensure value is a string for safe charAt usage
     if (value === null || value === undefined) value = "";
     if (typeof value !== "string") value = String(value);
 
@@ -185,10 +344,11 @@
         const newVal = toggleValues[value.toLowerCase()] || value;
         btn.textContent = newVal.charAt(0).toUpperCase() + newVal.slice(1);
         currentSettings[key] = newVal;
-        sendAllSettings();
         value = newVal;
+        sendAllSettings();
       };
       card.appendChild(btn);
+
     } else if (settingsSchema[key] === "input") {
       const input = document.createElement("input");
       input.type = "text";
@@ -198,48 +358,49 @@
         sendAllSettings();
       };
       card.appendChild(input);
+    } else {
+      // fallback: show value text
+      const spanVal = document.createElement("span");
+      spanVal.textContent = value;
+      card.appendChild(spanVal);
     }
 
     return card;
   }
 
-  async function loadSettings() {
-    guildId = getGuildIdFromURL();
-    const container = document.getElementById("settings-container");
-
-    if (!guildId) {
-      container.textContent = "Missing Guild ID in URL (?guild=123...)";
-      return;
-    }
-
+  // Load all settings from API and merge defaults
+  async function loadAllSettings() {
+    if (!guildId) return;
     try {
       const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
       const json = await res.json();
-
       currentSettings = { ...getDefaultSettings(), ...json };
-      renderSettings(currentSettings);
     } catch (e) {
       console.error("Failed to load settings:", e);
-      container.textContent = "Error loading settings.";
+      currentSettings = getDefaultSettings();
     }
   }
 
-  function renderSettings(settings) {
+  // Render only the selected setting card
+  function renderSetting(key) {
     const container = document.getElementById("settings-container");
     container.innerHTML = "";
+    const sectionTitle = document.getElementById("section-title");
+    sectionTitle.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
-    Object.entries(settingsSchema).forEach(([key, type]) => {
-      const value = settings[key] ?? getDefaultForType(type);
-      currentSettings[key] = value;
-      const el = createSettingElement(key, value);
-      container.appendChild(el);
-    });
+    let value = currentSettings[key];
+    if (value === undefined) value = getDefaultForType(settingsSchema[key]);
+
+    const el = createSettingElement(key, value);
+    container.appendChild(el);
   }
 
+  // Default value based on type
   function getDefaultForType(type) {
     return type === "input" ? "" : "off";
   }
 
+  // Default settings with all keys set to default values
   function getDefaultSettings() {
     const defaults = {};
     for (const [key, type] of Object.entries(settingsSchema)) {
@@ -248,7 +409,10 @@
     return defaults;
   }
 
+  // Send currentSettings to server
   async function sendAllSettings() {
+    if (!guildId) return;
+
     const payload = {
       guild: guildId,
       settings: currentSettings
@@ -258,14 +422,65 @@
       await fetch("https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
+      // Optional: show a success message or update UI
     } catch (e) {
       console.error("Failed to update settings:", e);
     }
   }
 
-  window.addEventListener("DOMContentLoaded", loadSettings);
+  // Sidebar click handler
+  async function onSidebarClick(e) {
+    const li = e.target.closest("li");
+    if (!li) return;
+
+    highlightSelected(li);
+    currentSettingKey = li.dataset.key;
+
+    // Load latest from server before showing
+    await loadAllSettings();
+    renderSetting(currentSettingKey);
+  }
+
+  // Initialize sidebar event listeners and expand first section
+  function initSidebar() {
+    document.querySelectorAll("nav.sidebar .section h3").forEach(h3 => {
+      h3.addEventListener("click", () => {
+        const ul = h3.nextElementSibling;
+        if (!ul) return;
+        ul.classList.toggle("show");
+      });
+    });
+
+    // Expand first section by default
+    const firstUl = document.querySelector("nav.sidebar .section ul");
+    if (firstUl) firstUl.classList.add("show");
+
+    // Attach click listeners to all li
+    document.querySelectorAll("nav.sidebar li").forEach(li => {
+      li.addEventListener("click", onSidebarClick);
+    });
+  }
+
+  async function main() {
+    guildId = getGuildIdFromURL();
+    if (!guildId) {
+      alert("Guild ID not found in URL query parameters.");
+      return;
+    }
+    initSidebar();
+    await loadAllSettings();
+    // Optional: pre-select first setting
+    const firstLi = document.querySelector("nav.sidebar li");
+    if (firstLi) {
+      firstLi.classList.add("active");
+      currentSettingKey = firstLi.dataset.key;
+      renderSetting(currentSettingKey);
+    }
+  }
+
+  main();
 </script>
 </body>
 </html>
