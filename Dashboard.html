@@ -60,18 +60,20 @@
     }
 
     /* Sidebar styles */
-    nav.sidebar {
-      width: 280px;
-      background: #1c1f26;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.8);
-      display: flex;
-      flex-direction: column;
-      padding: 20px 15px;
-      margin-top: 85px;           /* pushed below navbar */
-      height: calc(100vh - 60px); /* full height minus navbar */
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
+   nav.sidebar {
+  position: fixed;   /* make sidebar fixed */
+  top: 85px;         /* push down 85px from top */
+  left: 0;
+  width: 280px;
+  height: calc(100vh - 85px);
+  background: #1c1f26;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 15px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
 
     nav.sidebar h2 {
       color: #00bcd4;
