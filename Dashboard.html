@@ -498,15 +498,22 @@ function getGuildIdFromURL() {
   return params.get("guild") || "";
 }
 
-async function updateSettings(key, value) {
-  const guildId = getGuildIdFromURL();
+async function updateSettings(guildId, key, value) {
   const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting?guild=${guildId}`;
-  
+
+  const body = {
+    guild: guildId,
+    settings: {
+      [key]: value
+    }
+  };
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key, value })
+    body: JSON.stringify(body)
   });
+
   if (!res.ok) throw new Error("Failed to update settings");
   return await res.json();
 }
