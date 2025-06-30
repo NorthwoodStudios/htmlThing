@@ -581,161 +581,162 @@
     });
   });
 
-  function renderSetting(key, value) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
+function renderRolesDropdown(settingKey, selectedRoleIds) {
+  const container = document.getElementById("settings-container");
+  container.innerHTML = "";
 
-    if (settingsSchema[key] === "button") {
-      const card = document.createElement("div");
-      card.className = "setting-card";
+  // container card
+  const card = document.createElement("div");
+  card.className = "setting-card";
+  card.style.flexDirection = "column";
+  card.style.alignItems = "flex-start";
 
-      const label = document.createElement("span");
-      label.textContent = key
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+  // label
+  const label = document.createElement("span");
+  label.style.marginBottom = "8px";
+  label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-      const btn = document.createElement("button");
-      btn.textContent = value;
+  // dropdown container
+  const dropdown = document.createElement("div");
+  dropdown.className = "dropdown-container";
+  dropdown.setAttribute("tabindex", 0);
 
-      btn.onclick = async () => {
-        const lowerVal = value?.toLowerCase();
-        let newValue = toggleValues[lowerVal] || value;
-        try {
-          await updateSettings(getGuildIdFromURL(), key, newValue);
-          btn.textContent = newValue;
-          value = newValue;
-        } catch {
-          alert("Failed to update setting.");
-        }
-      };
+  // selected box showing selected roles as tags
+  const selectedBox = document.createElement("div");
+  selectedBox.className = "dropdown-selected";
 
-      card.appendChild(label);
-      card.appendChild(btn);
-      container.appendChild(card);
-    } else if (settingsSchema[key] === "input") {
-      const card = document.createElement("div");
-      card.className = "setting-card";
+  // arrow
+  const arrow = document.createElement("span");
+  arrow.className = "dropdown-arrow";
+  arrow.innerHTML = "&#9660;"; // down arrow
 
-      const label = document.createElement("span");
-      label.textContent = key
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
+  selectedBox.appendChild(arrow);
+  dropdown.appendChild(selectedBox);
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = value || "";
+  // dropdown list container
+  const list = document.createElement("div");
+  list.className = "dropdown-list";
 
-      let debounceTimeout;
-      input.addEventListener("input", () => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(async () => {
-          try {
-            await updateSettings(getGuildIdFromURL(), key, input.value);
-          } catch {
-            alert("Failed to update setting.");
-          }
-        }, 700);
-      });
+  // roles list items
+  cachedRoles.forEach(role => {
+    const item = document.createElement("div");
+    item.className = "dropdown-item";
+    item.style.setProperty('--role-color', role.color || '#00bcd4');
 
-      card.appendChild(label);
-      card.appendChild(input);
-      container.appendChild(card);
-    } else if (settingsSchema[key] === "roles_dropdown") {
-      renderRolesDropdown(key, value || []);
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `${settingKey}-role-${role.id}`;
+    checkbox.checked = selectedRoleIds.includes(role.id);
+
+    const label = document.createElement("label");
+    label.setAttribute("for", checkbox.id);
+    label.textContent = role.name;
+    label.style.cursor = "pointer";
+
+    const colorDot = document.createElement("span");
+    colorDot.className = "color-dot";
+    colorDot.style.backgroundColor = role.color || '#00bcd4';
+    colorDot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+
+    item.appendChild(colorDot);
+    item.appendChild(checkbox);
+    item.appendChild(label);
+
+    // Make entire item clickable except for direct clicks on checkbox or label
+    item.addEventListener("click", e => {
+      if (e.target === checkbox || e.target === label) return;
+      checkbox.checked = !checkbox.checked;
+      updateSelectedRoles(settingKey, checkbox.checked, role.id);
+    });
+
+    // Also update when checkbox changed directly (or label toggled)
+    checkbox.addEventListener("change", () => {
+      updateSelectedRoles(settingKey, checkbox.checked, role.id);
+    });
+
+    list.appendChild(item);
+  });
+
+  dropdown.appendChild(list);
+
+  // Show/hide dropdown on click
+  dropdown.addEventListener("click", e => {
+    e.stopPropagation();
+    list.classList.toggle("open");
+    arrow.classList.toggle("open");
+  });
+
+  // Close dropdown on click outside
+  document.addEventListener("click", () => {
+    list.classList.remove("open");
+    arrow.classList.remove("open");
+  });
+
+  // Store initial selection in our Set
+  selectedRoles[settingKey] = new Set(selectedRoleIds);
+
+  // Update tags displayed in the selected box
+  function refreshSelectedTags() {
+    // Remove all tags except arrow
+    [...selectedBox.querySelectorAll(".tag")].forEach(tag => tag.remove());
+
+    if (selectedRoles[settingKey].size === 0) {
+      const placeholder = document.createElement("span");
+      placeholder.style.color = "#5a5a5a";
+      placeholder.textContent = "Select roles...";
+      selectedBox.insertBefore(placeholder, arrow);
+      return;
+    }
+
+    selectedRoles[settingKey].forEach(roleId => {
+      const role = cachedRoles.find(r => r.id === roleId);
+      if (!role) return;
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.style.setProperty("--role-color", role.color || '#00bcd4');
+
+      const dot = document.createElement("span");
+      dot.className = "color-dot";
+      dot.style.backgroundColor = role.color || '#00bcd4';
+      dot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+
+      const text = document.createElement("span");
+      text.textContent = role.name;
+
+      tag.appendChild(dot);
+      tag.appendChild(text);
+
+      selectedBox.insertBefore(tag, arrow);
+    });
+  }
+
+  function updateSelectedRoles(key, checked, roleId) {
+    if (checked) {
+      selectedRoles[key].add(roleId);
     } else {
-      container.textContent = "This setting is not supported yet.";
+      selectedRoles[key].delete(roleId);
+    }
+    refreshSelectedTags();
+
+    // Save updated role list to backend
+    saveRolesSetting(key, Array.from(selectedRoles[key]));
+  }
+
+  async function saveRolesSetting(key, rolesArray) {
+    try {
+      await updateSettings("1349410870685470802", key, rolesArray);
+    } catch {
+      alert("Failed to update roles.");
     }
   }
 
-  function renderRolesDropdown(settingKey, selectedRoleIds) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
+  refreshSelectedTags();
 
-    const card = document.createElement("div");
-    card.className = "setting-card";
-    card.style.flexDirection = "column";
-    card.style.alignItems = "flex-start";
-
-    const label = document.createElement("span");
-    label.style.marginBottom = "8px";
-    label.textContent = settingKey
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    const dropdown = document.createElement("div");
-    dropdown.className = "dropdown-container";
-    dropdown.setAttribute("tabindex", 0);
-    dropdown.setAttribute("role", "listbox");
-    dropdown.setAttribute("aria-expanded", "false");
-
-    const selectedBox = document.createElement("div");
-    selectedBox.className = "dropdown-selected";
-
-    const arrow = document.createElement("span");
-    arrow.className = "dropdown-arrow";
-    arrow.innerHTML = "&#9660;";
-
-    selectedBox.appendChild(arrow);
-    dropdown.appendChild(selectedBox);
-
-    const list = document.createElement("div");
-    list.className = "dropdown-list";
-    list.setAttribute("role", "presentation");
-
-    cachedRoles.forEach((role) => {
-      const item = document.createElement("div");
-      item.className = "dropdown-item";
-      item.style.setProperty("--role-color", role.color || "#00bcd4");
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = `${settingKey}-role-${role.id}`;
-      checkbox.checked = selectedRoleIds.includes(role.id);
-      checkbox.tabIndex = -1;
-
-      const label = document.createElement("label");
-      label.setAttribute("for", checkbox.id);
-      label.textContent = role.name;
-
-      const colorDot = document.createElement("span");
-      colorDot.className = "color-dot";
-      colorDot.style.backgroundColor = role.color || "#00bcd4";
-      colorDot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
-
-      item.appendChild(colorDot);
-      item.appendChild(checkbox);
-      item.appendChild(label);
-
-      item.addEventListener("click", (e) => {
-        if (e.target.tagName.toLowerCase() === "input") return;
-        checkbox.checked = !checkbox.checked;
-        updateSelectedRoles(settingKey, checkbox.checked, role.id);
-      });
-
-      checkbox.addEventListener("change", () => {
-        updateSelectedRoles(settingKey, checkbox.checked, role.id);
-      });
-
-      list.appendChild(item);
-    });
-
-    dropdown.appendChild(list);
-
-    dropdown.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = list.classList.toggle("open");
-      arrow.classList.toggle("open", isOpen);
-      dropdown.setAttribute("aria-expanded", isOpen.toString());
-    });
-
-    // Close dropdown on outside click
-    document.addEventListener("click", () => {
-      list.classList.remove("open");
-      arrow.classList.remove("open");
-      dropdown.setAttribute("aria-expanded", "false");
-    });
-
-    selectedRoles[settingKey] = new Set(selectedRoleIds);
+  card.appendChild(label);
+  card.appendChild(dropdown);
+  container.appendChild(card);
+}
 
     function refreshSelectedTags() {
       [...selectedBox.querySelectorAll(".tag")].forEach((tag) => tag.remove());
