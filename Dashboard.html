@@ -433,7 +433,6 @@
     false: "true",
   };
 
-  // Setting types
   const settingsSchema = {
     bot_status: "button",
     prefix: "input",
@@ -452,20 +451,26 @@
   };
 
   let cachedRoles = [];
-
   let currentSetting = null;
   let selectedRoles = {
     staff_roles: new Set(),
     management_roles: new Set(),
   };
 
-  // Get guild ID dynamically from URL
   function getGuildIdFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get("guild") || "";
   }
 
-  // Sidebar: collapse all sections by default
+  function toggleSection(header) {
+    const ul = header.nextElementSibling;
+    if (!ul) return;
+
+    const isOpen = ul.style.display === "block";
+    document.querySelectorAll("nav.sidebar ul").forEach((u) => u.style.display = "none");
+    ul.style.display = isOpen ? "none" : "block";
+  }
+
   document.querySelectorAll("nav.sidebar h3").forEach((h3) => {
     const ul = h3.nextElementSibling;
     if (ul && ul.tagName === "UL") {
@@ -482,24 +487,9 @@
     }
   });
 
-  function toggleSection(header) {
-    const ul = header.nextElementSibling;
-    if (!ul) return;
-    const isOpen = ul.style.display === "block";
-
-    // Close all other sections
-    document.querySelectorAll("nav.sidebar ul").forEach((u) => {
-      u.style.display = "none";
-    });
-
-    ul.style.display = isOpen ? "none" : "block";
-  }
-
   async function fetchRoles(guildId) {
     try {
-      const res = await fetch(
-        `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`
-      );
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
       if (!res.ok) throw new Error("Failed to fetch roles");
       const roles = await res.json();
       cachedRoles = roles;
@@ -513,9 +503,7 @@
 
   async function fetchSettings(guildId) {
     try {
-      const res = await fetch(
-        `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`
-      );
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
       if (!res.ok) throw new Error("Failed to fetch settings");
       return await res.json();
     } catch (err) {
@@ -530,18 +518,15 @@
       guild: guildId,
       settings: { [key]: value },
     };
-
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-
     if (!res.ok) throw new Error("Failed to update settings");
     return await res.json();
   }
 
-  // Cache all sidebar <li> once
   const sidebarItems = document.querySelectorAll("nav.sidebar li");
 
   sidebarItems.forEach((li) => {
@@ -551,218 +536,224 @@
 
       sidebarItems.forEach((i) => i.classList.remove("active"));
       li.classList.add("active");
-
       currentSetting = key;
       document.getElementById("section-title").textContent = li.textContent;
 
       const guildId = getGuildIdFromURL();
       if (!guildId) {
-        document.getElementById("settings-container").textContent =
-          "Guild ID missing from URL.";
+        document.getElementById("settings-container").textContent = "Guild ID missing from URL.";
         return;
       }
 
       try {
-        if (
-          (key === "staff_roles" || key === "management_roles") &&
-          cachedRoles.length === 0
-        ) {
+        if ((key === "staff_roles" || key === "management_roles") && cachedRoles.length === 0) {
           await fetchRoles(guildId);
         }
 
         const settings = await fetchSettings(guildId);
-
         renderSetting(key, settings[key]);
       } catch (e) {
         console.error(e);
-        document.getElementById("settings-container").textContent =
-          "Failed to load setting.";
+        document.getElementById("settings-container").textContent = "Failed to load setting.";
       }
     });
   });
 
-function renderRolesDropdown(settingKey, selectedRoleIds = []) {
-  const container = document.getElementById("settings-container");
-  container.innerHTML = "";
-
-  const card = document.createElement("div");
-  card.className = "setting-card";
-  card.style.flexDirection = "column";
-  card.style.alignItems = "flex-start";
-
-  // Label
-  const label = document.createElement("span");
-  label.style.marginBottom = "8px";
-  label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-
-  // Dropdown container
-  const dropdown = document.createElement("div");
-  dropdown.className = "dropdown-container";
-  dropdown.setAttribute("tabindex", 0);
-
-  // Selected box (where tags & placeholder appear)
-  const selectedBox = document.createElement("div");
-  selectedBox.className = "dropdown-selected";
-
-  // Arrow icon
-  const arrow = document.createElement("span");
-  arrow.className = "dropdown-arrow";
-  arrow.innerHTML = "&#9660;"; // down arrow
-
-  selectedBox.appendChild(arrow);
-  dropdown.appendChild(selectedBox);
-
-  // Dropdown list container
-  const list = document.createElement("div");
-  list.className = "dropdown-list";
-
-  // Store selected roles in a Set for quick add/remove
-  selectedRoles[settingKey] = new Set(selectedRoleIds);
-
-  // Create list items for each role
-  cachedRoles.forEach(role => {
-    const item = document.createElement("div");
-    item.className = "dropdown-item";
-    item.style.setProperty("--role-color", role.color || "#00bcd4");
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `${settingKey}-role-${role.id}`;
-    checkbox.checked = selectedRoles[settingKey].has(role.id);
-
-    const label = document.createElement("label");
-    label.setAttribute("for", checkbox.id);
-    label.textContent = role.name;
-    label.style.cursor = "pointer";
-
-    const colorDot = document.createElement("span");
-    colorDot.className = "color-dot";
-    colorDot.style.backgroundColor = role.color || "#00bcd4";
-    colorDot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
-
-    item.appendChild(colorDot);
-    item.appendChild(checkbox);
-    item.appendChild(label);
-
-    // Toggle checkbox when clicking the entire item (except checkbox and label)
-    item.addEventListener("click", e => {
-      if (e.target === checkbox || e.target === label) return;
-      checkbox.checked = !checkbox.checked;
-      updateSelectedRoles(settingKey, checkbox.checked, role.id);
-    });
-
-    // Update when checkbox toggled directly
-    checkbox.addEventListener("change", () => {
-      updateSelectedRoles(settingKey, checkbox.checked, role.id);
-    });
-
-    list.appendChild(item);
-  });
-
-  dropdown.appendChild(list);
-
-  // Toggle dropdown open/close
-  dropdown.addEventListener("click", e => {
-    e.stopPropagation();
-    list.classList.toggle("open");
-    arrow.classList.toggle("open");
-  });
-
-  // Close dropdown if clicked outside
-  document.addEventListener("click", () => {
-    list.classList.remove("open");
-    arrow.classList.remove("open");
-  });
-
-  // Update selected tags display
-  function refreshSelectedTags() {
-    // Remove old tags except arrow
-    [...selectedBox.querySelectorAll(".tag, .placeholder")].forEach(el => el.remove());
-
-    if (selectedRoles[settingKey].size === 0) {
-      // Show placeholder
-      const placeholder = document.createElement("span");
-      placeholder.className = "placeholder";
-      placeholder.style.color = "#5a5a5a";
-      placeholder.textContent = "Select roles...";
-      selectedBox.insertBefore(placeholder, arrow);
-      return;
-    }
-
-    // Show selected roles as tags
-    selectedRoles[settingKey].forEach(roleId => {
-      const role = cachedRoles.find(r => r.id === roleId);
-      if (!role) return;
-
-      const tag = document.createElement("span");
-      tag.className = "tag";
-      tag.style.setProperty("--role-color", role.color || "#00bcd4");
-
-      const dot = document.createElement("span");
-      dot.className = "color-dot";
-      dot.style.backgroundColor = role.color || "#00bcd4";
-      dot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
-
-      const text = document.createElement("span");
-      text.textContent = role.name;
-
-      tag.appendChild(dot);
-      tag.appendChild(text);
-
-      selectedBox.insertBefore(tag, arrow);
-    });
-  }
-
-  // Update selection and save
-  async function updateSelectedRoles(key, checked, roleId) {
-    if (checked) {
-      selectedRoles[key].add(roleId);
-    } else {
-      selectedRoles[key].delete(roleId);
-    }
-    refreshSelectedTags();
-    await saveRolesSetting(key, Array.from(selectedRoles[key]));
-  }
-
-  async function saveRolesSetting(key, rolesArray) {
-    try {
-      await updateSettings(getGuildIdFromURL(), key, rolesArray);
-    } catch {
-      alert("Failed to update roles.");
-    }
-  }
-
-  refreshSelectedTags();
-
-  card.appendChild(label);
-  card.appendChild(dropdown);
-  container.appendChild(card);
-}
-
-
-  // Renders setting depending on its type (only roles_dropdown here for demo)
   function renderSetting(key, value) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+
     if (settingsSchema[key] === "roles_dropdown") {
       renderRolesDropdown(key, value || []);
+    } else if (settingsSchema[key] === "button") {
+      const card = document.createElement("div");
+      card.className = "setting-card";
+
+      const label = document.createElement("span");
+      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+      const btn = document.createElement("button");
+      btn.textContent = (value || "off").toUpperCase();
+      btn.addEventListener("click", async () => {
+        const newValue = toggleValues[String(value).toLowerCase()] || "on";
+        try {
+          await updateSettings(getGuildIdFromURL(), key, newValue);
+          btn.textContent = newValue.toUpperCase();
+          value = newValue;
+        } catch {
+          alert("Failed to update setting.");
+        }
+      });
+
+      card.appendChild(label);
+      card.appendChild(btn);
+      container.appendChild(card);
+    } else if (settingsSchema[key] === "input") {
+      const card = document.createElement("div");
+      card.className = "setting-card";
+
+      const label = document.createElement("span");
+      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value || "";
+      input.placeholder = "Enter value";
+      input.addEventListener("change", async () => {
+        try {
+          await updateSettings(getGuildIdFromURL(), key, input.value.trim());
+        } catch {
+          alert("Failed to update setting.");
+        }
+      });
+
+      card.appendChild(label);
+      card.appendChild(input);
+      container.appendChild(card);
     } else {
-      // Handle other types like buttons, inputs here if needed
-      const container = document.getElementById("settings-container");
-      container.innerHTML = `<p>Setting type "${settingsSchema[key]}" not implemented in this demo.</p>`;
+      container.textContent = `Setting type "${settingsSchema[key]}" not implemented.`;
     }
   }
 
-  // Initial load: open first section and first item
-  (function init() {
-    const firstSection = document.querySelector("nav.sidebar .section");
-    if (firstSection) {
-      const ul = firstSection.querySelector("ul");
-      if (ul) ul.style.display = "block";
+  function renderRolesDropdown(settingKey, selectedRoleIds = []) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
 
-      const firstLi = ul?.querySelector("li");
-      if (firstLi) firstLi.click();
+    const card = document.createElement("div");
+    card.className = "setting-card";
+    card.style.flexDirection = "column";
+    card.style.alignItems = "flex-start";
+
+    const label = document.createElement("span");
+    label.style.marginBottom = "8px";
+    label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "dropdown-container";
+    dropdown.setAttribute("tabindex", 0);
+
+    const selectedBox = document.createElement("div");
+    selectedBox.className = "dropdown-selected";
+
+    const arrow = document.createElement("span");
+    arrow.className = "dropdown-arrow";
+    arrow.innerHTML = "&#9660;";
+    selectedBox.appendChild(arrow);
+    dropdown.appendChild(selectedBox);
+
+    const list = document.createElement("div");
+    list.className = "dropdown-list";
+    selectedRoles[settingKey] = new Set(selectedRoleIds);
+
+    cachedRoles.forEach(role => {
+      const item = document.createElement("div");
+      item.className = "dropdown-item";
+      item.style.setProperty("--role-color", role.color || "#00bcd4");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `${settingKey}-role-${role.id}`;
+      checkbox.checked = selectedRoles[settingKey].has(role.id);
+
+      const label = document.createElement("label");
+      label.setAttribute("for", checkbox.id);
+      label.textContent = role.name;
+      label.style.cursor = "pointer";
+
+      const colorDot = document.createElement("span");
+      colorDot.className = "color-dot";
+      colorDot.style.backgroundColor = role.color || "#00bcd4";
+      colorDot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
+
+      item.appendChild(colorDot);
+      item.appendChild(checkbox);
+      item.appendChild(label);
+
+      item.addEventListener("click", (e) => {
+        if (e.target === checkbox || e.target === label) return;
+        checkbox.checked = !checkbox.checked;
+        updateSelectedRoles(settingKey, checkbox.checked, role.id);
+      });
+
+      checkbox.addEventListener("change", () => {
+        updateSelectedRoles(settingKey, checkbox.checked, role.id);
+      });
+
+      list.appendChild(item);
+    });
+
+    dropdown.appendChild(list);
+    dropdown.addEventListener("click", (e) => {
+      e.stopPropagation();
+      list.classList.toggle("open");
+      arrow.classList.toggle("open");
+    });
+    document.addEventListener("click", () => {
+      list.classList.remove("open");
+      arrow.classList.remove("open");
+    });
+
+    function refreshSelectedTags() {
+      [...selectedBox.querySelectorAll(".tag, .placeholder")].forEach(el => el.remove());
+
+      if (selectedRoles[settingKey].size === 0) {
+        const placeholder = document.createElement("span");
+        placeholder.className = "placeholder";
+        placeholder.style.color = "#5a5a5a";
+        placeholder.textContent = "Select roles...";
+        selectedBox.insertBefore(placeholder, arrow);
+        return;
+      }
+
+      selectedRoles[settingKey].forEach(roleId => {
+        const role = cachedRoles.find(r => r.id === roleId);
+        if (!role) return;
+
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.style.setProperty("--role-color", role.color || "#00bcd4");
+
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.backgroundColor = role.color || "#00bcd4";
+        dot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
+
+        const text = document.createElement("span");
+        text.textContent = role.name;
+
+        tag.appendChild(dot);
+        tag.appendChild(text);
+        selectedBox.insertBefore(tag, arrow);
+      });
     }
-  })();
+
+    async function updateSelectedRoles(key, checked, roleId) {
+      if (checked) {
+        selectedRoles[key].add(roleId);
+      } else {
+        selectedRoles[key].delete(roleId);
+      }
+      refreshSelectedTags();
+      try {
+        await updateSettings
+        await updateSettings(getGuildIdFromURL(), key, Array.from(selectedRoles[key]));
+      } catch (err) {
+        console.error("Failed to update roles:", err);
+        alert("Failed to update selected roles.");
+      }
+    }
+
+    refreshSelectedTags();
+
+    card.appendChild(label);
+    card.appendChild(dropdown);
+    container.appendChild(card);
+  }
 </script>
+
+
+
+
 
 
 </body>
