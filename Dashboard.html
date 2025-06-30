@@ -60,20 +60,20 @@
     }
 
     /* Sidebar styles */
-   nav.sidebar {
-  position: fixed;   /* make sidebar fixed */
-  top: 85px;         /* push down 85px from top */
-  left: 0;
-  width: 280px;
-  height: calc(100vh - 85px);
-  background: #1c1f26;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.8);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 15px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
+    nav.sidebar {
+      position: fixed;
+      top: 85px;
+      left: 0;
+      width: 280px;
+      height: calc(100vh - 85px);
+      background: #1c1f26;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 15px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
 
     nav.sidebar h2 {
       color: #00bcd4;
@@ -139,7 +139,7 @@
       overflow-y: auto;
       padding: 30px 20px;
       max-width: 900px;
-      margin: 60px auto 0 auto;   /* pushed below navbar */
+      margin: 60px auto 0 auto;
       height: calc(100vh - 60px);
     }
 
@@ -201,11 +201,11 @@
       outline: none;
     }
 
-    .setting-card select {
-      min-width: 220px;
-      max-width: 300px;
+    /* Multi-select styling */
+    select[multiple] {
+      height: 120px;
+      width: 250px;
       outline: none;
-      cursor: pointer;
     }
 
     @media (max-width: 900px) {
@@ -219,7 +219,7 @@
         flex-direction: row;
         overflow-x: auto;
         padding: 10px;
-        margin-top: 60px; /* keep pushing below navbar */
+        margin-top: 60px;
         height: auto;
       }
       nav.sidebar .section {
@@ -300,6 +300,7 @@
     "true": "false", "false": "true"
   };
 
+  // Define the type of input for each setting
   const settingsSchema = {
     bot_status: "button",
     prefix: "input",
@@ -320,6 +321,7 @@
   let guildId = null;
   let currentSettings = {};
   let currentSettingKey = null;
+  let rolesList = []; // fetched roles for multiselect dropdowns
 
   function getGuildIdFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -336,65 +338,160 @@
     li.classList.add("active");
   }
 
+  // Capitalize helper
   function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  function getDefaultForType(type) {
-    if (type === "input" || type === "multiselect") return "";
-    return "off";
-  }
-
-  function getDefaultSettings() {
-    const defaults = {};
-    for (const [key, type] of Object.entries(settingsSchema)) {
-      defaults[key] = getDefaultForType(type);
-    }
-    return defaults;
-  }
-
-  async function fetchRoles() {
-    if (!guildId) return [];
-    try {
-      const res = await fetch(`/get_roles?guild=${guildId}`);
-      if (!res.ok) throw new Error("Failed to fetch roles");
-      const data = await res.json();
-      return data.roles || [];
-    } catch (e) {
-      console.error("Error fetching roles:", e);
-      return [];
-    }
-  }
-
-  function createMultiSelect(key, selectedRoles, rolesList) {
-    const select = document.createElement("select");
-    select.multiple = true;
-    select.size = Math.min(8, rolesList.length || 1);
-    select.style.minWidth = "220px";
-
-    // rolesList: [{id: "...", name: "..."}]
-    rolesList.forEach(role => {
-      const option = document.createElement("option");
-      option.value = role.id;
-      option.textContent = role.name;
-      if (selectedRoles.includes(role.id)) {
-        option.selected = true;
-      }
-      select.appendChild(option);
-    });
-
-    select.onchange = () => {
-      const selected = Array.from(select.selectedOptions).map(opt => opt.value);
-      currentSettings[key] = selected;
-      sendAllSettings();
-    };
-
-    return select;
-  }
-
+  // Creates UI elements depending on setting type
   function createSettingElement(key, value) {
     const card = document.createElement("div");
     card.className = "setting-card";
 
     const label = document.createElement("span");
-    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.to
+    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    card.appendChild(label);
+
+    if (value === null || value === undefined) value = "";
+    if (typeof value !== "string") value = String(value);
+
+    if (settingsSchema[key] === "button") {
+      const btn = document.createElement("button");
+      btn.textContent = capitalize(value);
+      btn.onclick = () => {
+        const newVal = toggleValues[value.toLowerCase()] || value;
+        btn.textContent = capitalize(newVal);
+        currentSettings[key] = newVal;
+        value = newVal;
+        sendAllSettings();
+      };
+      card.appendChild(btn);
+
+    } else if (settingsSchema[key] === "input") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.onblur = () => {
+        currentSettings[key] = input.value;
+        sendAllSettings();
+      };
+      card.appendChild(input);
+
+    } else if (settingsSchema[key] === "multiselect") {
+      // Create multi-select dropdown with roles options
+      const select = document.createElement("select");
+      select.multiple = true;
+
+      // Populate options
+      rolesList.forEach(role => {
+        const option = document.createElement("option");
+        option.value = role.id;
+        option.textContent = role.name;
+        if (Array.isArray(value) && value.includes(role.id)) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+
+      select.onchange = () => {
+        const selectedIds = Array.from(select.selectedOptions).map(opt => opt.value);
+        currentSettings[key] = selectedIds;
+        sendAllSettings();
+      };
+
+      card.appendChild(select);
+
+    } else {
+      // fallback text display
+      const span = document.createElement("span");
+      span.textContent = value;
+      card.appendChild(span);
+    }
+
+    return card;
+  }
+
+  function displaySetting(key) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+    currentSettingKey = key;
+
+    let displayValue = currentSettings[key];
+    if (settingsSchema[key] === "multiselect" && !Array.isArray(displayValue)) {
+      // Ensure it's an array (empty if none)
+      displayValue = [];
+    }
+    const elem = createSettingElement(key, displayValue);
+    container.appendChild(elem);
+
+    const title = document.getElementById("section-title");
+    title.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  // Fetch settings from backend
+  async function fetchSettings() {
+    if (!guildId) {
+      alert("Guild ID missing in URL.");
+      return;
+    }
+    try {
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      const data = await res.json();
+      currentSettings = data;
+
+      // Show first setting by default
+      const firstKey = Object.keys(settingsSchema)[0];
+      displaySetting(firstKey);
+    } catch (e) {
+      alert("Error fetching settings: " + e.message);
+    }
+  }
+
+  // Fetch roles from backend
+  async function fetchRoles() {
+    if (!guildId) return;
+    try {
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
+      if (!res.ok) throw new Error("Failed to fetch roles");
+      rolesList = await res.json();
+    } catch (e) {
+      alert("Error fetching roles: " + e.message);
+    }
+  }
+
+  // Send updated settings to backend
+  async function sendAllSettings() {
+    if (!guildId) return;
+    try {
+      await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings?guild=${guildId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(currentSettings)
+      });
+    } catch (e) {
+      console.error("Failed to update settings:", e);
+    }
+  }
+
+  // Sidebar click handler
+  document.querySelectorAll("nav.sidebar li").forEach(li => {
+    li.addEventListener("click", () => {
+      highlightSelected(li);
+      displaySetting(li.dataset.key);
+    });
+  });
+
+  // On page load
+  async function init() {
+    guildId = getGuildIdFromURL();
+    await fetchRoles();
+    await fetchSettings();
+  }
+
+  init();
+</script>
+</body>
+</html>
