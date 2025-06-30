@@ -60,9 +60,9 @@
     }
 
     /* Sidebar styles */
-    nav.sidebar {
-      position: fixed;
-      top: 85px;
+   nav.sidebar {
+      position: fixed;   /* make sidebar fixed */
+      top: 85px;         /* push down 85px from top */
       left: 0;
       width: 280px;
       height: calc(100vh - 85px);
@@ -139,7 +139,7 @@
       overflow-y: auto;
       padding: 30px 20px;
       max-width: 900px;
-      margin: 60px auto 0 auto;
+      margin: 60px auto 0 auto;   /* pushed below navbar */
       height: calc(100vh - 60px);
     }
 
@@ -167,6 +167,8 @@
       justify-content: space-between;
       align-items: center;
       transition: background-color 0.25s ease;
+      position: relative;
+      user-select: none;
     }
 
     .setting-card:hover {
@@ -180,8 +182,7 @@
     }
 
     .setting-card button,
-    .setting-card input,
-    .setting-card select {
+    .setting-card input {
       background-color: #263238;
       color: #00bcd4;
       border: 1px solid #00bcd4;
@@ -189,6 +190,7 @@
       padding: 6px 14px;
       font-size: 14px;
       transition: all 0.3s ease;
+      outline: none;
     }
 
     .setting-card button:hover {
@@ -198,14 +200,142 @@
 
     .setting-card input[type="text"] {
       width: 200px;
-      outline: none;
     }
 
-    /* Multi-select styling */
-    select[multiple] {
-      height: 120px;
-      width: 250px;
-      outline: none;
+    /* Custom multi-select dropdown for roles */
+
+    .dropdown-container {
+      position: relative;
+      width: 350px;
+      max-width: 100%;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dropdown-selected {
+      background-color: #263238;
+      border: 1px solid #00bcd4;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #00bcd4;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 40px;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    .dropdown-selected .tag {
+      background-color: #00bcd433;
+      border-radius: 12px;
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #00bcd4;
+      user-select: text;
+    }
+
+    .dropdown-selected .tag .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--role-color, #00bcd4);
+      box-shadow: 0 0 6px var(--role-color, #00bcd4);
+      flex-shrink: 0;
+    }
+
+    .dropdown-arrow {
+      margin-left: auto;
+      transition: transform 0.3s ease;
+      user-select: none;
+    }
+
+    .dropdown-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #1c1f26;
+      border: 1px solid #00bcd4;
+      border-radius: 8px;
+      margin-top: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+      box-shadow: 0 0 15px #00bcd466;
+      z-index: 200;
+      display: none;
+      flex-direction: column;
+      padding: 8px 0;
+    }
+
+    .dropdown-list.open {
+      display: flex;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      user-select: none;
+    }
+
+    .dropdown-item:hover {
+      background-color: #00bcd422;
+    }
+
+    .dropdown-item input[type="checkbox"] {
+      display: none;
+    }
+
+    .dropdown-item .color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: var(--role-color, #00bcd4);
+      box-shadow: 0 0 6px var(--role-color, #00bcd4);
+      flex-shrink: 0;
+    }
+
+    .dropdown-item label {
+      flex-grow: 1;
+      color: #aad4ff;
+      user-select: none;
+    }
+
+    /* Checkbox custom check mark */
+    .dropdown-item input[type="checkbox"] + label::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+      vertical-align: middle;
+      border-radius: 6px;
+      border: 1.5px solid #00bcd4;
+      background-color: transparent;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .dropdown-item input[type="checkbox"]:checked + label::before {
+      background-color: #00bcd4;
+      border-color: #00bcd4;
+      box-shadow: 0 0 8px #00bcd4;
+      content: "✓";
+      color: #121212;
+      font-weight: bold;
+      text-align: center;
+      line-height: 18px;
+      font-size: 14px;
     }
 
     @media (max-width: 900px) {
@@ -219,7 +349,7 @@
         flex-direction: row;
         overflow-x: auto;
         padding: 10px;
-        margin-top: 60px;
+        margin-top: 60px; /* keep pushing below navbar */
         height: auto;
       }
       nav.sidebar .section {
@@ -300,12 +430,12 @@
     "true": "false", "false": "true"
   };
 
-  // Define the type of input for each setting
+  // Setting types
   const settingsSchema = {
     bot_status: "button",
     prefix: "input",
-    staff_roles: "multiselect",
-    management_roles: "multiselect",
+    staff_roles: "roles_dropdown",
+    management_roles: "roles_dropdown",
     quota: "input",
     types: "input",
     reset: "button",
@@ -318,180 +448,328 @@
     more_later: "button"
   };
 
-  let guildId = null;
-  let currentSettings = {};
-  let currentSettingKey = null;
-  let rolesList = []; // fetched roles for multiselect dropdowns
+  // Cache roles from backend
+  let cachedRoles = [];
 
-  function getGuildIdFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("guild");
-  }
+  // UI state
+  let currentSetting = null;
+  let selectedRoles = {
+    staff_roles: new Set(),
+    management_roles: new Set()
+  };
+
+  // Sidebar logic
+  document.querySelectorAll("nav.sidebar h3").forEach(h3 => {
+    h3.nextElementSibling.style.display = "none"; // collapse by default
+  });
 
   function toggleSection(header) {
     const ul = header.nextElementSibling;
-    if (ul) ul.classList.toggle("show");
-  }
-
-  function highlightSelected(li) {
-    document.querySelectorAll('nav.sidebar li').forEach(item => item.classList.remove("active"));
-    li.classList.add("active");
-  }
-
-  // Capitalize helper
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  // Creates UI elements depending on setting type
-  function createSettingElement(key, value) {
-    const card = document.createElement("div");
-    card.className = "setting-card";
-
-    const label = document.createElement("span");
-    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-    card.appendChild(label);
-
-    if (value === null || value === undefined) value = "";
-    if (typeof value !== "string") value = String(value);
-
-    if (settingsSchema[key] === "button") {
-      const btn = document.createElement("button");
-      btn.textContent = capitalize(value);
-      btn.onclick = () => {
-        const newVal = toggleValues[value.toLowerCase()] || value;
-        btn.textContent = capitalize(newVal);
-        currentSettings[key] = newVal;
-        value = newVal;
-        sendAllSettings();
-      };
-      card.appendChild(btn);
-
-    } else if (settingsSchema[key] === "input") {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = value;
-      input.onblur = () => {
-        currentSettings[key] = input.value;
-        sendAllSettings();
-      };
-      card.appendChild(input);
-
-    } else if (settingsSchema[key] === "multiselect") {
-      // Create multi-select dropdown with roles options
-      const select = document.createElement("select");
-      select.multiple = true;
-
-      // Populate options
-      rolesList.forEach(role => {
-        const option = document.createElement("option");
-        option.value = role.id;
-        option.textContent = role.name;
-        if (Array.isArray(value) && value.includes(role.id)) {
-          option.selected = true;
-        }
-        select.appendChild(option);
-      });
-
-      select.onchange = () => {
-        const selectedIds = Array.from(select.selectedOptions).map(opt => opt.value);
-        currentSettings[key] = selectedIds;
-        sendAllSettings();
-      };
-
-      card.appendChild(select);
-
+    if (!ul) return;
+    if (ul.style.display === "block") {
+      ul.style.display = "none";
     } else {
-      // fallback text display
-      const span = document.createElement("span");
-      span.textContent = value;
-      card.appendChild(span);
-    }
-
-    return card;
-  }
-
-  function displaySetting(key) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
-    currentSettingKey = key;
-
-    let displayValue = currentSettings[key];
-    if (settingsSchema[key] === "multiselect" && !Array.isArray(displayValue)) {
-      // Ensure it's an array (empty if none)
-      displayValue = [];
-    }
-    const elem = createSettingElement(key, displayValue);
-    container.appendChild(elem);
-
-    const title = document.getElementById("section-title");
-    title.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-  }
-
-  // Fetch settings from backend
-  async function fetchSettings() {
-    if (!guildId) {
-      alert("Guild ID missing in URL.");
-      return;
-    }
-    try {
-      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      const data = await res.json();
-      currentSettings = data;
-
-      // Show first setting by default
-      const firstKey = Object.keys(settingsSchema)[0];
-      displaySetting(firstKey);
-    } catch (e) {
-      alert("Error fetching settings: " + e.message);
+      // close others
+      document.querySelectorAll("nav.sidebar ul").forEach(u => u.style.display = "none");
+      ul.style.display = "block";
     }
   }
 
-  // Fetch roles from backend
-  async function fetchRoles() {
-    if (!guildId) return;
-    try {
-      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
-      if (!res.ok) throw new Error("Failed to fetch roles");
-      rolesList = await res.json();
-    } catch (e) {
-      alert("Error fetching roles: " + e.message);
-    }
+  // Load roles from backend (dummy function - replace URL)
+  async function fetchRoles(guildId) {
+    // Simulate fetch: replace this with your real fetch('/get_roles?guild=...')
+    const res = await fetch(`/get_roles?guild=${guildId}`);
+    if (!res.ok) throw new Error("Failed to fetch roles");
+    const roles = await res.json();
+    cachedRoles = roles;
+    return roles;
   }
 
-  // Send updated settings to backend
-  async function sendAllSettings() {
-    if (!guildId) return;
-    try {
-      await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings?guild=${guildId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(currentSettings)
-      });
-    } catch (e) {
-      console.error("Failed to update settings:", e);
-    }
+  // Load settings from backend (dummy function - replace URL)
+  async function fetchSettings(guildId) {
+    const res = await fetch(`/get_settings?guild=${guildId}`);
+    if (!res.ok) throw new Error("Failed to fetch settings");
+    const settings = await res.json();
+    return settings;
   }
 
-  // Sidebar click handler
+  // Update settings to backend (dummy function - replace URL)
+  async function updateSettings(guildId, key, value) {
+    const res = await fetch('/update_settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guild: guildId, key, value })
+    });
+    if (!res.ok) throw new Error("Failed to update settings");
+    return await res.json();
+  }
+
+  // Sidebar item click handler
   document.querySelectorAll("nav.sidebar li").forEach(li => {
-    li.addEventListener("click", () => {
-      highlightSelected(li);
-      displaySetting(li.dataset.key);
+    li.addEventListener("click", async () => {
+      const key = li.getAttribute("data-key");
+      if (!key) return;
+
+      // Highlight active
+      document.querySelectorAll("nav.sidebar li").forEach(i => i.classList.remove("active"));
+      li.classList.add("active");
+
+      currentSetting = key;
+      document.getElementById("section-title").textContent = li.textContent;
+
+      // Load current guild id somehow - example:
+      const guildId = "1349410870685470802"; // replace with dynamic id
+
+      try {
+        // Lazy load roles if needed
+        if ((key === "staff_roles" || key === "management_roles") && cachedRoles.length === 0) {
+          await fetchRoles(guildId);
+        }
+
+        const settings = await fetchSettings(guildId);
+
+        // Render setting UI
+        renderSetting(key, settings[key]);
+      } catch (e) {
+        console.error(e);
+        document.getElementById("settings-container").textContent = "Failed to load setting.";
+      }
     });
   });
 
-  // On page load
-  async function init() {
-    guildId = getGuildIdFromURL();
-    await fetchRoles();
-    await fetchSettings();
+  function renderSetting(key, value) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+
+    if (settingsSchema[key] === "button") {
+      // Toggle button for on/off/true/false style
+      const card = document.createElement("div");
+      card.className = "setting-card";
+
+      const label = document.createElement("span");
+      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+      const btn = document.createElement("button");
+      btn.textContent = value;
+      btn.onclick = async () => {
+        let newValue = toggleValues[value.toLowerCase()] || value;
+        try {
+          await updateSettings("1349410870685470802", key, newValue);
+          btn.textContent = newValue;
+          value = newValue;
+        } catch {
+          alert("Failed to update setting.");
+        }
+      };
+
+      card.appendChild(label);
+      card.appendChild(btn);
+      container.appendChild(card);
+
+    } else if (settingsSchema[key] === "input") {
+      // Text input
+      const card = document.createElement("div");
+      card.className = "setting-card";
+
+      const label = document.createElement("span");
+      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value || "";
+
+      let debounceTimeout;
+      input.addEventListener("input", () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+          try {
+            await updateSettings("1349410870685470802", key, input.value);
+          } catch {
+            alert("Failed to update setting.");
+          }
+        }, 700);
+      });
+
+      card.appendChild(label);
+      card.appendChild(input);
+      container.appendChild(card);
+
+    } else if (settingsSchema[key] === "roles_dropdown") {
+      renderRolesDropdown(key, value || []);
+    } else {
+      container.textContent = "This setting is not supported yet.";
+    }
   }
 
-  init();
+  function renderRolesDropdown(settingKey, selectedRoleIds) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+
+    // container card
+    const card = document.createElement("div");
+    card.className = "setting-card";
+    card.style.flexDirection = "column";
+    card.style.alignItems = "flex-start";
+
+    // label
+    const label = document.createElement("span");
+    label.style.marginBottom = "8px";
+    label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+    // dropdown container
+    const dropdown = document.createElement("div");
+    dropdown.className = "dropdown-container";
+    dropdown.setAttribute("tabindex", 0);
+
+    // selected box showing selected roles as tags
+    const selectedBox = document.createElement("div");
+    selectedBox.className = "dropdown-selected";
+
+    // arrow
+    const arrow = document.createElement("span");
+    arrow.className = "dropdown-arrow";
+    arrow.innerHTML = "&#9660;"; // down arrow
+
+    selectedBox.appendChild(arrow);
+    dropdown.appendChild(selectedBox);
+
+    // dropdown list container
+    const list = document.createElement("div");
+    list.className = "dropdown-list";
+
+    // roles list items
+    cachedRoles.forEach(role => {
+      const item = document.createElement("div");
+      item.className = "dropdown-item";
+      item.style.setProperty('--role-color', role.color || '#00bcd4');
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = `${settingKey}-role-${role.id}`;
+      checkbox.checked = selectedRoleIds.includes(role.id);
+
+      const label = document.createElement("label");
+      label.setAttribute("for", checkbox.id);
+      label.textContent = role.name;
+
+      const colorDot = document.createElement("span");
+      colorDot.className = "color-dot";
+      colorDot.style.backgroundColor = role.color || '#00bcd4';
+      colorDot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+
+      item.appendChild(colorDot);
+      item.appendChild(checkbox);
+      item.appendChild(label);
+
+      // Toggle checkbox when clicking anywhere on item
+      item.addEventListener("click", e => {
+        if (e.target.tagName.toLowerCase() === "input") return; // ignore double toggle on checkbox click
+        checkbox.checked = !checkbox.checked;
+        updateSelectedRoles(settingKey, checkbox.checked, role.id);
+      });
+
+      // Also update when checkbox changed directly
+      checkbox.addEventListener("change", () => {
+        updateSelectedRoles(settingKey, checkbox.checked, role.id);
+      });
+
+      list.appendChild(item);
+    });
+
+    dropdown.appendChild(list);
+
+    // Show/hide dropdown on click
+    dropdown.addEventListener("click", e => {
+      e.stopPropagation();
+      list.classList.toggle("open");
+      arrow.classList.toggle("open");
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener("click", () => {
+      list.classList.remove("open");
+      arrow.classList.remove("open");
+    });
+
+    // Store initial selection in our Set
+    selectedRoles[settingKey] = new Set(selectedRoleIds);
+
+    // Update tags displayed in the selected box
+    function refreshSelectedTags() {
+      // Remove all tags except arrow
+      [...selectedBox.querySelectorAll(".tag")].forEach(tag => tag.remove());
+
+      if (selectedRoles[settingKey].size === 0) {
+        const placeholder = document.createElement("span");
+        placeholder.style.color = "#5a5a5a";
+        placeholder.textContent = "Select roles...";
+        selectedBox.insertBefore(placeholder, arrow);
+        return;
+      }
+
+      selectedRoles[settingKey].forEach(roleId => {
+        const role = cachedRoles.find(r => r.id === roleId);
+        if (!role) return;
+
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.style.setProperty("--role-color", role.color || '#00bcd4');
+
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.backgroundColor = role.color || '#00bcd4';
+        dot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+
+        const text = document.createElement("span");
+        text.textContent = role.name;
+
+        tag.appendChild(dot);
+        tag.appendChild(text);
+
+        selectedBox.insertBefore(tag, arrow);
+      });
+    }
+
+    function updateSelectedRoles(key, checked, roleId) {
+      if (checked) {
+        selectedRoles[key].add(roleId);
+      } else {
+        selectedRoles[key].delete(roleId);
+      }
+      refreshSelectedTags();
+
+      // Save updated role list to backend
+      saveRolesSetting(key, Array.from(selectedRoles[key]));
+    }
+
+    async function saveRolesSetting(key, rolesArray) {
+      try {
+        await updateSettings("1349410870685470802", key, rolesArray);
+      } catch {
+        alert("Failed to update roles.");
+      }
+    }
+
+    refreshSelectedTags();
+
+    card.appendChild(label);
+    card.appendChild(dropdown);
+    container.appendChild(card);
+  }
+
+  // Initial load: optionally open first section and first item
+  (function init() {
+    // Show first section
+    const firstSection = document.querySelector("nav.sidebar .section");
+    if (firstSection) {
+      firstSection.querySelector("ul").style.display = "block";
+      // Select first li
+      const firstLi = firstSection.querySelector("li");
+      if (firstLi) {
+        firstLi.click();
+      }
+    }
+  })();
 </script>
 </body>
 </html>
