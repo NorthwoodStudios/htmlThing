@@ -493,15 +493,23 @@
   }
 
   // Update settings to backend (dummy function - replace URL)
-  async function updateSettings(guildId, key, value) {
-    const res = await fetch('https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guild: guildId, key, value })
-    });
-    if (!res.ok) throw new Error("Failed to update settings");
-    return await res.json();
-  }
+function getGuildIdFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("guild") || "";
+}
+
+async function updateSettings(key, value) {
+  const guildId = getGuildIdFromURL();
+  const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings?guild=${guildId}`;
+  
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value })
+  });
+  if (!res.ok) throw new Error("Failed to update settings");
+  return await res.json();
+}
 
   // Sidebar item click handler
   document.querySelectorAll("nav.sidebar li").forEach(li => {
