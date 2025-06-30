@@ -676,6 +676,7 @@
 
     // Store selected roles in Set
     selectedRoles[settingKey] = new Set(selectedRoleIds);
+    refreshSelectedTags();
 
     // Refresh selected tags or placeholder inside selectedBox
     function refreshSelectedTags() {
