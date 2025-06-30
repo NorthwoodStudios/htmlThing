@@ -581,174 +581,164 @@
     });
   });
 
-  function renderRolesDropdown(settingKey, selectedRoleIds) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
+function renderRolesDropdown(settingKey, selectedRoleIds = []) {
+  const container = document.getElementById("settings-container");
+  container.innerHTML = "";
 
-    // Container card
-    const card = document.createElement("div");
-    card.className = "setting-card";
-    card.style.flexDirection = "column";
-    card.style.alignItems = "flex-start";
+  const card = document.createElement("div");
+  card.className = "setting-card";
+  card.style.flexDirection = "column";
+  card.style.alignItems = "flex-start";
 
-    // Label for dropdown
-    const label = document.createElement("span");
-    label.style.marginBottom = "8px";
-    label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  // Label
+  const label = document.createElement("span");
+  label.style.marginBottom = "8px";
+  label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
-    // Dropdown container
-    const dropdown = document.createElement("div");
-    dropdown.className = "dropdown-container";
-    dropdown.setAttribute("tabindex", 0);
+  // Dropdown container
+  const dropdown = document.createElement("div");
+  dropdown.className = "dropdown-container";
+  dropdown.setAttribute("tabindex", 0);
 
-    // Selected box showing selected roles as tags or placeholder
-    const selectedBox = document.createElement("div");
-    selectedBox.className = "dropdown-selected";
+  // Selected box (where tags & placeholder appear)
+  const selectedBox = document.createElement("div");
+  selectedBox.className = "dropdown-selected";
 
-    // Arrow icon
-    const arrow = document.createElement("span");
-    arrow.className = "dropdown-arrow";
-    arrow.innerHTML = "&#9660;";
+  // Arrow icon
+  const arrow = document.createElement("span");
+  arrow.className = "dropdown-arrow";
+  arrow.innerHTML = "&#9660;"; // down arrow
 
-    selectedBox.appendChild(arrow);
-    dropdown.appendChild(selectedBox);
+  selectedBox.appendChild(arrow);
+  dropdown.appendChild(selectedBox);
 
-    // Dropdown list container
-    const list = document.createElement("div");
-    list.className = "dropdown-list";
+  // Dropdown list container
+  const list = document.createElement("div");
+  list.className = "dropdown-list";
 
-    // Create role items with checkboxes
-    cachedRoles.forEach(role => {
-      const item = document.createElement("div");
-      item.className = "dropdown-item";
-      item.style.setProperty('--role-color', role.color || '#00bcd4');
+  // Store selected roles in a Set for quick add/remove
+  selectedRoles[settingKey] = new Set(selectedRoleIds);
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = `${settingKey}-role-${role.id}`;
-      checkbox.checked = selectedRoleIds.includes(role.id);
+  // Create list items for each role
+  cachedRoles.forEach(role => {
+    const item = document.createElement("div");
+    item.className = "dropdown-item";
+    item.style.setProperty("--role-color", role.color || "#00bcd4");
 
-      const label = document.createElement("label");
-      label.setAttribute("for", checkbox.id);
-      label.textContent = role.name;
-      label.style.cursor = "pointer";
-      label.style.userSelect = "none";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `${settingKey}-role-${role.id}`;
+    checkbox.checked = selectedRoles[settingKey].has(role.id);
 
-      const colorDot = document.createElement("span");
-      colorDot.className = "color-dot";
-      colorDot.style.backgroundColor = role.color || '#00bcd4';
-      colorDot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+    const label = document.createElement("label");
+    label.setAttribute("for", checkbox.id);
+    label.textContent = role.name;
+    label.style.cursor = "pointer";
 
-      // Append color dot, checkbox, and label to item
-      item.appendChild(colorDot);
-      item.appendChild(checkbox);
-      item.appendChild(label);
+    const colorDot = document.createElement("span");
+    colorDot.className = "color-dot";
+    colorDot.style.backgroundColor = role.color || "#00bcd4";
+    colorDot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
 
-      // Clicking anywhere on item toggles checkbox except direct clicks on checkbox or label
-      item.addEventListener("click", e => {
-        if (e.target === checkbox || e.target === label) return;
-        checkbox.checked = !checkbox.checked;
-        updateSelectedRoles(settingKey, checkbox.checked, role.id);
-      });
+    item.appendChild(colorDot);
+    item.appendChild(checkbox);
+    item.appendChild(label);
 
-      // Update selection on checkbox change or label toggle
-      checkbox.addEventListener("change", () => {
-        updateSelectedRoles(settingKey, checkbox.checked, role.id);
-      });
-
-      list.appendChild(item);
+    // Toggle checkbox when clicking the entire item (except checkbox and label)
+    item.addEventListener("click", e => {
+      if (e.target === checkbox || e.target === label) return;
+      checkbox.checked = !checkbox.checked;
+      updateSelectedRoles(settingKey, checkbox.checked, role.id);
     });
 
-    dropdown.appendChild(list);
-
-    // Toggle dropdown open/close on dropdown click
-    dropdown.addEventListener("click", e => {
-      e.stopPropagation();
-      list.classList.toggle("open");
-      arrow.classList.toggle("open");
+    // Update when checkbox toggled directly
+    checkbox.addEventListener("change", () => {
+      updateSelectedRoles(settingKey, checkbox.checked, role.id);
     });
 
-    // Close dropdown when clicking outside
-    document.addEventListener("click", () => {
-      list.classList.remove("open");
-      arrow.classList.remove("open");
+    list.appendChild(item);
+  });
+
+  dropdown.appendChild(list);
+
+  // Toggle dropdown open/close
+  dropdown.addEventListener("click", e => {
+    e.stopPropagation();
+    list.classList.toggle("open");
+    arrow.classList.toggle("open");
+  });
+
+  // Close dropdown if clicked outside
+  document.addEventListener("click", () => {
+    list.classList.remove("open");
+    arrow.classList.remove("open");
+  });
+
+  // Update selected tags display
+  function refreshSelectedTags() {
+    // Remove old tags except arrow
+    [...selectedBox.querySelectorAll(".tag, .placeholder")].forEach(el => el.remove());
+
+    if (selectedRoles[settingKey].size === 0) {
+      // Show placeholder
+      const placeholder = document.createElement("span");
+      placeholder.className = "placeholder";
+      placeholder.style.color = "#5a5a5a";
+      placeholder.textContent = "Select roles...";
+      selectedBox.insertBefore(placeholder, arrow);
+      return;
+    }
+
+    // Show selected roles as tags
+    selectedRoles[settingKey].forEach(roleId => {
+      const role = cachedRoles.find(r => r.id === roleId);
+      if (!role) return;
+
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.style.setProperty("--role-color", role.color || "#00bcd4");
+
+      const dot = document.createElement("span");
+      dot.className = "color-dot";
+      dot.style.backgroundColor = role.color || "#00bcd4";
+      dot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
+
+      const text = document.createElement("span");
+      text.textContent = role.name;
+
+      tag.appendChild(dot);
+      tag.appendChild(text);
+
+      selectedBox.insertBefore(tag, arrow);
     });
-
-    // Store selected roles in Set
-    selectedRoles[settingKey] = new Set(selectedRoleIds);
-    refreshSelectedTags();
-
-    // Refresh selected tags or placeholder inside selectedBox
-    function refreshSelectedTags() {
-      // Remove all tags except arrow
-      [...selectedBox.querySelectorAll(".tag")].forEach(tag => tag.remove());
-
-      // Remove existing placeholder if any
-      const existingPlaceholder = selectedBox.querySelector(".placeholder");
-      if (existingPlaceholder) existingPlaceholder.remove();
-
-      if (selectedRoles[settingKey].size === 0) {
-        // Show placeholder only once
-        const placeholder = document.createElement("span");
-        placeholder.className = "placeholder";
-        placeholder.style.color = "#5a5a5a";
-        placeholder.textContent = "Select roles...";
-        selectedBox.insertBefore(placeholder, arrow);
-        return;
-      }
-
-      // Show selected roles as tags
-      selectedRoles[settingKey].forEach(roleId => {
-        const role = cachedRoles.find(r => r.id === roleId);
-        if (!role) return;
-
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.style.setProperty("--role-color", role.color || '#00bcd4');
-
-        const dot = document.createElement("span");
-        dot.className = "color-dot";
-        dot.style.backgroundColor = role.color || '#00bcd4';
-        dot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
-
-        const text = document.createElement("span");
-        text.textContent = role.name;
-
-        tag.appendChild(dot);
-        tag.appendChild(text);
-
-        selectedBox.insertBefore(tag, arrow);
-      });
-    }
-
-    // Update selected roles Set and save changes
-    function updateSelectedRoles(key, checked, roleId) {
-      if (checked) {
-        selectedRoles[key].add(roleId);
-      } else {
-        selectedRoles[key].delete(roleId);
-      }
-      refreshSelectedTags();
-
-      // Save updated roles setting
-      saveRolesSetting(key, Array.from(selectedRoles[key]));
-    }
-
-    async function saveRolesSetting(key, rolesArray) {
-      try {
-        await updateSettings(getGuildIdFromURL(), key, rolesArray);
-      } catch {
-        alert("Failed to update roles.");
-      }
-    }
-
-    // Initial render of tags or placeholder
-    refreshSelectedTags();
-
-    card.appendChild(label);
-    card.appendChild(dropdown);
-    container.appendChild(card);
   }
+
+  // Update selection and save
+  async function updateSelectedRoles(key, checked, roleId) {
+    if (checked) {
+      selectedRoles[key].add(roleId);
+    } else {
+      selectedRoles[key].delete(roleId);
+    }
+    refreshSelectedTags();
+    await saveRolesSetting(key, Array.from(selectedRoles[key]));
+  }
+
+  async function saveRolesSetting(key, rolesArray) {
+    try {
+      await updateSettings(getGuildIdFromURL(), key, rolesArray);
+    } catch {
+      alert("Failed to update roles.");
+    }
+  }
+
+  refreshSelectedTags();
+
+  card.appendChild(label);
+  card.appendChild(dropdown);
+  container.appendChild(card);
+}
+
 
   // Renders setting depending on its type (only roles_dropdown here for demo)
   function renderSetting(key, value) {
