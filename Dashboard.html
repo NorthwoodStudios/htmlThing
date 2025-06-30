@@ -1,289 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Horizon Bot - Bot Settings</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0e1015;
-      color: #f4f4f4;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    nav.Nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      z-index: 100;
-      background: #1c1f26;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 20px;
-      backdrop-filter: blur(12px);
-    }
-
-    .settings-title {
-      margin-top: 30px; /* Adjust as needed */
-    }
-
-    .back-btn {
-      font-size: 26px;
-      color: #00bcd4;
-      cursor: pointer;
-      user-select: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      transition: background-color 0.3s ease;
-    }
-    .back-btn:hover {
-      background-color: #00bcd433;
-    }
-
-    .nav-center {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-weight: 700;
-      font-size: 22px;
-      color: #00bcd4;
-      text-shadow: 0 0 12px #00bcd4cc;
-      user-select: none;
-    }
-
-    /* Sidebar styles */
-   nav.sidebar {
-  position: fixed;   /* make sidebar fixed */
-  top: 85px;         /* push down 85px from top */
-  left: 0;
-  width: 280px;
-  height: calc(100vh - 85px);
-  background: #1c1f26;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.8);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 15px;
-  overflow-y: auto;
-  flex-shrink: 0;
-}
-
-    nav.sidebar h2 {
-      color: #00bcd4;
-      margin-top: 0;
-      margin-bottom: 15px;
-      user-select: none;
-    }
-
-    nav.sidebar .section {
-      margin-bottom: 20px;
-      user-select: none;
-    }
-
-    nav.sidebar .section h3 {
-      cursor: pointer;
-      font-weight: 700;
-      margin-bottom: 10px;
-      color: #aad4ff;
-      transition: color 0.2s ease;
-    }
-
-    nav.sidebar .section h3:hover {
-      color: #00bcd4;
-    }
-
-    nav.sidebar ul {
-      list-style: none;
-      padding-left: 15px;
-      margin: 0;
-      display: none;
-      user-select: none;
-    }
-
-    nav.sidebar ul.show {
-      display: block;
-    }
-
-    nav.sidebar li {
-      margin-bottom: 8px;
-      cursor: pointer;
-      color: #aad4ff;
-      transition: color 0.2s ease;
-      font-size: 15px;
-      padding: 4px 8px;
-      border-radius: 6px;
-    }
-
-    nav.sidebar li:hover {
-      color: #00bcd4;
-      background-color: #00bcd422;
-    }
-
-    nav.sidebar li.active {
-      color: #00bcd4;
-      font-weight: 700;
-      background-color: #00bcd433;
-    }
-
-    /* Main content styles */
-    main.content {
-      flex-grow: 1;
-      background: #0e1015;
-      overflow-y: auto;
-      padding: 30px 20px;
-      max-width: 900px;
-      margin: 60px auto 0 auto;   /* pushed below navbar */
-      height: calc(100vh - 60px);
-    }
-
-    main.content h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #00bcd4;
-      text-shadow: 0 0 12px #00bcd4cc;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-
-    .settings-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .setting-card {
-      background: #1c1f26;
-      border-radius: 14px;
-      padding: 16px 20px;
-      box-shadow: 0 0 15px #00bcd466;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background-color 0.25s ease;
-    }
-
-    .setting-card:hover {
-      background-color: #00bcd422;
-    }
-
-    .setting-card span {
-      font-size: 16px;
-      font-weight: 500;
-      color: #aad4ff;
-    }
-
-    .setting-card button,
-    .setting-card input {
-      background-color: #263238;
-      color: #00bcd4;
-      border: 1px solid #00bcd4;
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 14px;
-      transition: all 0.3s ease;
-    }
-
-    .setting-card button:hover {
-      background-color: #00bcd4;
-      color: #121212;
-    }
-
-    .setting-card input[type="text"] {
-      width: 200px;
-      outline: none;
-    }
-
-    @media (max-width: 900px) {
-      body {
-        flex-direction: column;
-      }
-      nav.sidebar {
-        width: 100%;
-        height: auto;
-        box-shadow: none;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 10px;
-        margin-top: 60px; /* keep pushing below navbar */
-        height: auto;
-      }
-      nav.sidebar .section {
-        margin-right: 30px;
-        margin-bottom: 0;
-      }
-      nav.sidebar ul {
-        display: flex !important;
-        padding-left: 0;
-        margin: 0;
-      }
-      nav.sidebar li {
-        margin-right: 15px;
-        margin-bottom: 0;
-      }
-      main.content {
-        max-width: 100%;
-        margin: 20px 0 50px 0;
-        padding: 20px 10px;
-        height: auto;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Settings Panel</title>
+<style>
+  body {
+    background: #1a1a1a;
+    color: #00bcd4;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+  }
+  nav.sidebar {
+    width: 260px;
+    background: #263238;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    height: 100vh;
+  }
+  nav.sidebar .section h3 {
+    cursor: pointer;
+    user-select: none;
+    margin-top: 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #00bcd4;
+  }
+  nav.sidebar .section ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 15px 0;
+    display: none;
+  }
+  nav.sidebar .section ul.show {
+    display: block;
+  }
+  nav.sidebar li {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  nav.sidebar li.active,
+  nav.sidebar li:hover {
+    background: #00bcd4;
+    color: #263238;
+  }
+  #content {
+    flex: 1;
+    padding: 40px;
+    box-sizing: border-box;
+  }
+  #section-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+  .setting-card {
+    background: #37474f;
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 500px;
+  }
+  .setting-card span {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .setting-card input[type="text"] {
+    background: #263238;
+    color: #00bcd4;
+    border: 1px solid #00bcd4;
+    border-radius: 8px;
+    padding: 8px;
+    width: 100%;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  .setting-card button {
+    background: #00bcd4;
+    border: none;
+    border-radius: 8px;
+    color: #263238;
+    font-weight: bold;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .setting-card button:hover {
+    background: #0097a7;
+  }
+</style>
 </head>
 <body>
-  <nav class="Nav">
-    <div class="back-btn" onclick="history.back()" title="Go Back">←</div>
-    <div class="nav-center">Horizon Bot Settings</div>
-  </nav>
 
-  <nav class="sidebar" aria-label="Settings Navigation">
-    <h2 class="settings-title">Settings</h2>
+<nav class="sidebar">
+  <div class="section">
+    <h3>Bot Settings</h3>
+    <ul>
+      <li data-key="bot_status">Bot Status</li>
+      <li data-key="prefix">Prefix</li>
+      <li data-key="staff_roles">Staff Roles</li>
+      <li data-key="management_roles">Management Roles</li>
+      <li data-key="quota">Quota</li>
+      <li data-key="types">Types</li>
+      <li data-key="reset">Reset</li>
+      <li data-key="main_logs">Main Logs</li>
+      <li data-key="shift_logs">Shift Logs</li>
+      <li data-key="punishment_logs">Punishment Logs</li>
+      <li data-key="log_bans">Log Bans</li>
+      <li data-key="command_logs">Command Logs</li>
+      <li data-key="server_logs">Server Logs</li>
+      <li data-key="more_later">More Later</li>
+    </ul>
+  </div>
+</nav>
 
-    <div class="section">
-      <h3 onclick="toggleSection(this)">General Settings</h3>
-      <ul>
-        <li data-key="bot_status">Bot Activity (Premium)</li>
-        <li data-key="prefix">Prefix</li>
-        <li data-key="staff_roles">Staff Roles</li>
-        <li data-key="management_roles">Management Roles</li>
-      </ul>
-    </div>
-
-    <div class="section">
-      <h3 onclick="toggleSection(this)">Shift Management</h3>
-      <ul>
-        <li data-key="quota">Quota</li>
-        <li data-key="types">Types</li>
-        <li data-key="reset">Reset</li>
-      </ul>
-    </div>
-
-    <div class="section">
-      <h3 onclick="toggleSection(this)">Logs</h3>
-      <ul>
-        <li data-key="main_logs">Main Logs</li>
-        <li data-key="shift_logs">Shift Logs</li>
-        <li data-key="punishment_logs">Punishment Logs</li>
-        <li data-key="log_bans">Ban Logs</li>
-        <li data-key="command_logs">Command Logs</li>
-        <li data-key="server_logs">Server Logs</li>
-        <li data-key="more_later">More Later</li>
-      </ul>
-    </div>
-  </nav>
-
-  <main class="content">
-    <h1 id="section-title">Select a setting</h1>
-    <div class="settings-grid" id="settings-container">
-      Please select a setting from the left menu.
-    </div>
-  </main>
+<div id="content">
+  <h1 id="section-title">Loading...</h1>
+  <div id="settings-container"></div>
+</div>
 
 <script>
   const toggleValues = {
@@ -328,84 +164,8 @@
     li.classList.add("active");
   }
 
-  function createSettingElement(key, value) {
-    const card = document.createElement("div");
-    card.className = "setting-card";
-
-    const label = document.createElement("span");
-    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-    card.appendChild(label);
-
-    if (value === null || value === undefined) value = "";
-    if (typeof value !== "string") value = String(value);
-
-    if (settingsSchema[key] === "button") {
-      const btn = document.createElement("button");
-      btn.textContent = capitalize(value);
-      btn.onclick = () => {
-        const newVal = toggleValues[value.toLowerCase()] || value;
-        btn.textContent = capitalize(newVal);
-        currentSettings[key] = newVal;
-        value = newVal;
-        sendAllSettings();
-      };
-      card.appendChild(btn);
-
-    } else if (settingsSchema[key] === "input") {
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = value;
-      input.onblur = () => {
-        currentSettings[key] = input.value;
-        sendAllSettings();
-      };
-      card.appendChild(input);
-
-    } else {
-      const spanVal = document.createElement("span");
-      spanVal.textContent = value;
-      card.appendChild(spanVal);
-    }
-
-    return card;
-  }
-
   function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  async function loadAllSettings() {
-    if (!guildId) return;
-
-    try {
-      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
-      if (!res.ok) {
-        console.warn("Failed to load settings: Server returned", res.status);
-        currentSettings = getDefaultSettings();
-        return;
-      }
-
-      const json = await res.json();
-      console.log("Loaded settings:", json);
-      currentSettings = { ...getDefaultSettings(), ...json };
-    } catch (e) {
-      console.error("Error fetching settings:", e);
-      currentSettings = getDefaultSettings();
-    }
-  }
-
-  function renderSetting(key) {
-    const container = document.getElementById("settings-container");
-    container.innerHTML = "";
-
-    const sectionTitle = document.getElementById("section-title");
-    sectionTitle.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-
-    let value = currentSettings[key];
-    if (value === undefined) value = getDefaultForType(settingsSchema[key]);
-
-    const el = createSettingElement(key, value);
-    container.appendChild(el);
   }
 
   function getDefaultForType(type) {
@@ -443,6 +203,130 @@
     }
   }
 
+  async function loadAllSettings() {
+    if (!guildId) return;
+
+    try {
+      const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
+      if (!res.ok) {
+        console.warn("Failed to load settings: Server returned", res.status);
+        currentSettings = getDefaultSettings();
+        return;
+      }
+
+      const json = await res.json();
+      console.log("Loaded settings:", json);
+      currentSettings = { ...getDefaultSettings(), ...json };
+    } catch (e) {
+      console.error("Error fetching settings:", e);
+      currentSettings = getDefaultSettings();
+    }
+  }
+
+  async function createSettingElement(key, value) {
+    const card = document.createElement("div");
+    card.className = "setting-card";
+
+    const label = document.createElement("span");
+    label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    card.appendChild(label);
+
+    if (value === null || value === undefined) value = "";
+    if (typeof value !== "string" && !Array.isArray(value)) value = String(value);
+
+    if (key === "staff_roles" || key === "management_roles") {
+      // Multi-select dropdown for roles
+
+      let selectedRoles = [];
+      if (Array.isArray(value)) {
+        selectedRoles = value;
+      } else if (typeof value === "string" && value.length > 0) {
+        selectedRoles = value.split(",").map(r => r.trim()).filter(r => r.length > 0);
+      }
+
+      const select = document.createElement("select");
+      select.multiple = true;
+      select.style.minWidth = "200px";
+      select.style.height = "120px";
+      select.style.backgroundColor = "#263238";
+      select.style.color = "#00bcd4";
+      select.style.border = "1px solid #00bcd4";
+      select.style.borderRadius = "8px";
+      select.style.padding = "6px";
+
+      card.appendChild(select);
+
+      try {
+        if (!guildId) throw new Error("Guild ID missing");
+        const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
+        if (!res.ok) throw new Error("Failed to fetch roles");
+        const roles = await res.json();
+
+        roles.forEach(role => {
+          const option = document.createElement("option");
+          option.value = role.id;
+          option.textContent = role.name;
+          if (selectedRoles.includes(role.id) || selectedRoles.includes(role.name)) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        });
+      } catch (e) {
+        console.error("Error loading roles:", e);
+      }
+
+      select.onchange = () => {
+        const selected = Array.from(select.selectedOptions).map(opt => opt.value);
+        currentSettings[key] = selected;
+        sendAllSettings();
+      };
+
+    } else if (settingsSchema[key] === "button") {
+      const btn = document.createElement("button");
+      btn.textContent = capitalize(value);
+      btn.onclick = () => {
+        const newVal = toggleValues[value.toLowerCase()] || value;
+        btn.textContent = capitalize(newVal);
+        currentSettings[key] = newVal;
+        value = newVal;
+        sendAllSettings();
+      };
+      card.appendChild(btn);
+
+    } else if (settingsSchema[key] === "input") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.onblur = () => {
+        currentSettings[key] = input.value;
+        sendAllSettings();
+      };
+      card.appendChild(input);
+
+    } else {
+      const spanVal = document.createElement("span");
+      spanVal.textContent = value;
+      card.appendChild(spanVal);
+    }
+
+    return card;
+  }
+
+  function renderSetting(key) {
+    const container = document.getElementById("settings-container");
+    container.innerHTML = "";
+
+    const sectionTitle = document.getElementById("section-title");
+    sectionTitle.textContent = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+
+    let value = currentSettings[key];
+    if (value === undefined) value = getDefaultForType(settingsSchema[key]);
+
+    createSettingElement(key, value).then(el => {
+      container.appendChild(el);
+    });
+  }
+
   async function onSidebarClick(e) {
     const li = e.target.closest("li");
     if (!li) return;
@@ -477,7 +361,6 @@
 
     initSidebar();
 
-    // Load and show first setting by default
     const firstLi = document.querySelector("nav.sidebar li");
     if (firstLi) {
       highlightSelected(firstLi);
@@ -491,5 +374,6 @@
 
   main();
 </script>
+
 </body>
 </html>
