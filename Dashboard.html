@@ -425,9 +425,12 @@
 
 <script>
   const toggleValues = {
-    "on": "off", "off": "on",
-    "enabled": "disabled", "disabled": "enabled",
-    "true": "false", "false": "true"
+    on: "off",
+    off: "on",
+    enabled: "disabled",
+    disabled: "enabled",
+    true: "false",
+    false: "true",
   };
 
   // Setting types
@@ -445,108 +448,135 @@
     log_bans: "button",
     command_logs: "button",
     server_logs: "button",
-    more_later: "button"
+    more_later: "button",
   };
 
-  // Cache roles from backend
   let cachedRoles = [];
 
-  // UI state
   let currentSetting = null;
   let selectedRoles = {
     staff_roles: new Set(),
-    management_roles: new Set()
+    management_roles: new Set(),
   };
 
-  // Sidebar logic
-  document.querySelectorAll("nav.sidebar h3").forEach(h3 => {
-    h3.nextElementSibling.style.display = "none"; // collapse by default
+  // Get guild ID dynamically from URL
+  function getGuildIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("guild") || "";
+  }
+
+  // Sidebar: collapse all sections by default
+  document.querySelectorAll("nav.sidebar h3").forEach((h3) => {
+    const ul = h3.nextElementSibling;
+    if (ul && ul.tagName === "UL") {
+      ul.style.display = "none";
+      h3.style.cursor = "pointer";
+      h3.addEventListener("click", () => toggleSection(h3));
+      h3.setAttribute("tabindex", "0");
+      h3.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleSection(h3);
+        }
+      });
+    }
   });
 
   function toggleSection(header) {
     const ul = header.nextElementSibling;
     if (!ul) return;
-    if (ul.style.display === "block") {
-      ul.style.display = "none";
-    } else {
-      // close others
-      document.querySelectorAll("nav.sidebar ul").forEach(u => u.style.display = "none");
-      ul.style.display = "block";
-    }
+    const isOpen = ul.style.display === "block";
+
+    // Close all other sections
+    document.querySelectorAll("nav.sidebar ul").forEach((u) => {
+      u.style.display = "none";
+    });
+
+    ul.style.display = isOpen ? "none" : "block";
   }
 
-  // Load roles from backend (dummy function - replace URL)
   async function fetchRoles(guildId) {
-    const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
-    if (!res.ok) throw new Error("Failed to fetch roles");
-    const roles = await res.json();
-    cachedRoles = roles;
-    return roles;
-  }
-
-  // Load settings from backend (dummy function - replace URL)
-  async function fetchSettings(guildId) {
-    const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
-    if (!res.ok) throw new Error("Failed to fetch settings");
-    const settings = await res.json();
-    return settings;
-  }
-
-  // Update settings to backend (dummy function - replace URL)
-function getGuildIdFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("guild") || "";
-}
-
-async function updateSettings(guildId, key, value) {
-  const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting?guild=${guildId}`;
-
-  const body = {
-    guild: guildId,
-    settings: {
-      [key]: value
+    try {
+      const res = await fetch(
+        `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch roles");
+      const roles = await res.json();
+      cachedRoles = roles;
+      return roles;
+    } catch (err) {
+      console.error(err);
+      cachedRoles = [];
+      return [];
     }
-  };
+  }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  async function fetchSettings(guildId) {
+    try {
+      const res = await fetch(
+        `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      return await res.json();
+    } catch (err) {
+      console.error(err);
+      return {};
+    }
+  }
 
-  if (!res.ok) throw new Error("Failed to update settings");
-  return await res.json();
-}
+  async function updateSettings(guildId, key, value) {
+    const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting?guild=${guildId}`;
+    const body = {
+      guild: guildId,
+      settings: { [key]: value },
+    };
 
-  // Sidebar item click handler
-  document.querySelectorAll("nav.sidebar li").forEach(li => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) throw new Error("Failed to update settings");
+    return await res.json();
+  }
+
+  // Cache all sidebar <li> once
+  const sidebarItems = document.querySelectorAll("nav.sidebar li");
+
+  sidebarItems.forEach((li) => {
     li.addEventListener("click", async () => {
       const key = li.getAttribute("data-key");
       if (!key) return;
 
-      // Highlight active
-      document.querySelectorAll("nav.sidebar li").forEach(i => i.classList.remove("active"));
+      sidebarItems.forEach((i) => i.classList.remove("active"));
       li.classList.add("active");
 
       currentSetting = key;
       document.getElementById("section-title").textContent = li.textContent;
 
-      // Load current guild id somehow - example:
-      const guildId = "1349410870685470802"; // replace with dynamic id
+      const guildId = getGuildIdFromURL();
+      if (!guildId) {
+        document.getElementById("settings-container").textContent =
+          "Guild ID missing from URL.";
+        return;
+      }
 
       try {
-        // Lazy load roles if needed
-        if ((key === "staff_roles" || key === "management_roles") && cachedRoles.length === 0) {
+        if (
+          (key === "staff_roles" || key === "management_roles") &&
+          cachedRoles.length === 0
+        ) {
           await fetchRoles(guildId);
         }
 
         const settings = await fetchSettings(guildId);
 
-        // Render setting UI
         renderSetting(key, settings[key]);
       } catch (e) {
         console.error(e);
-        document.getElementById("settings-container").textContent = "Failed to load setting.";
+        document.getElementById("settings-container").textContent =
+          "Failed to load setting.";
       }
     });
   });
@@ -556,19 +586,22 @@ async function updateSettings(guildId, key, value) {
     container.innerHTML = "";
 
     if (settingsSchema[key] === "button") {
-      // Toggle button for on/off/true/false style
       const card = document.createElement("div");
       card.className = "setting-card";
 
       const label = document.createElement("span");
-      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      label.textContent = key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
       const btn = document.createElement("button");
       btn.textContent = value;
+
       btn.onclick = async () => {
-        let newValue = toggleValues[value.toLowerCase()] || value;
+        const lowerVal = value?.toLowerCase();
+        let newValue = toggleValues[lowerVal] || value;
         try {
-          await updateSettings("1349410870685470802", key, newValue);
+          await updateSettings(getGuildIdFromURL(), key, newValue);
           btn.textContent = newValue;
           value = newValue;
         } catch {
@@ -579,14 +612,14 @@ async function updateSettings(guildId, key, value) {
       card.appendChild(label);
       card.appendChild(btn);
       container.appendChild(card);
-
     } else if (settingsSchema[key] === "input") {
-      // Text input
       const card = document.createElement("div");
       card.className = "setting-card";
 
       const label = document.createElement("span");
-      label.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      label.textContent = key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
       const input = document.createElement("input");
       input.type = "text";
@@ -597,7 +630,7 @@ async function updateSettings(guildId, key, value) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(async () => {
           try {
-            await updateSettings("1349410870685470802", key, input.value);
+            await updateSettings(getGuildIdFromURL(), key, input.value);
           } catch {
             alert("Failed to update setting.");
           }
@@ -607,7 +640,6 @@ async function updateSettings(guildId, key, value) {
       card.appendChild(label);
       card.appendChild(input);
       container.appendChild(card);
-
     } else if (settingsSchema[key] === "roles_dropdown") {
       renderRolesDropdown(key, value || []);
     } else {
@@ -619,48 +651,47 @@ async function updateSettings(guildId, key, value) {
     const container = document.getElementById("settings-container");
     container.innerHTML = "";
 
-    // container card
     const card = document.createElement("div");
     card.className = "setting-card";
     card.style.flexDirection = "column";
     card.style.alignItems = "flex-start";
 
-    // label
     const label = document.createElement("span");
     label.style.marginBottom = "8px";
-    label.textContent = settingKey.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    label.textContent = settingKey
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    // dropdown container
     const dropdown = document.createElement("div");
     dropdown.className = "dropdown-container";
     dropdown.setAttribute("tabindex", 0);
+    dropdown.setAttribute("role", "listbox");
+    dropdown.setAttribute("aria-expanded", "false");
 
-    // selected box showing selected roles as tags
     const selectedBox = document.createElement("div");
     selectedBox.className = "dropdown-selected";
 
-    // arrow
     const arrow = document.createElement("span");
     arrow.className = "dropdown-arrow";
-    arrow.innerHTML = "&#9660;"; // down arrow
+    arrow.innerHTML = "&#9660;";
 
     selectedBox.appendChild(arrow);
     dropdown.appendChild(selectedBox);
 
-    // dropdown list container
     const list = document.createElement("div");
     list.className = "dropdown-list";
+    list.setAttribute("role", "presentation");
 
-    // roles list items
-    cachedRoles.forEach(role => {
+    cachedRoles.forEach((role) => {
       const item = document.createElement("div");
       item.className = "dropdown-item";
-      item.style.setProperty('--role-color', role.color || '#00bcd4');
+      item.style.setProperty("--role-color", role.color || "#00bcd4");
 
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.id = `${settingKey}-role-${role.id}`;
       checkbox.checked = selectedRoleIds.includes(role.id);
+      checkbox.tabIndex = -1;
 
       const label = document.createElement("label");
       label.setAttribute("for", checkbox.id);
@@ -668,21 +699,19 @@ async function updateSettings(guildId, key, value) {
 
       const colorDot = document.createElement("span");
       colorDot.className = "color-dot";
-      colorDot.style.backgroundColor = role.color || '#00bcd4';
-      colorDot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+      colorDot.style.backgroundColor = role.color || "#00bcd4";
+      colorDot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
 
       item.appendChild(colorDot);
       item.appendChild(checkbox);
       item.appendChild(label);
 
-      // Toggle checkbox when clicking anywhere on item
-      item.addEventListener("click", e => {
-        if (e.target.tagName.toLowerCase() === "input") return; // ignore double toggle on checkbox click
+      item.addEventListener("click", (e) => {
+        if (e.target.tagName.toLowerCase() === "input") return;
         checkbox.checked = !checkbox.checked;
         updateSelectedRoles(settingKey, checkbox.checked, role.id);
       });
 
-      // Also update when checkbox changed directly
       checkbox.addEventListener("change", () => {
         updateSelectedRoles(settingKey, checkbox.checked, role.id);
       });
@@ -692,26 +721,24 @@ async function updateSettings(guildId, key, value) {
 
     dropdown.appendChild(list);
 
-    // Show/hide dropdown on click
-    dropdown.addEventListener("click", e => {
+    dropdown.addEventListener("click", (e) => {
       e.stopPropagation();
-      list.classList.toggle("open");
-      arrow.classList.toggle("open");
+      const isOpen = list.classList.toggle("open");
+      arrow.classList.toggle("open", isOpen);
+      dropdown.setAttribute("aria-expanded", isOpen.toString());
     });
 
-    // Close dropdown on click outside
+    // Close dropdown on outside click
     document.addEventListener("click", () => {
       list.classList.remove("open");
       arrow.classList.remove("open");
+      dropdown.setAttribute("aria-expanded", "false");
     });
 
-    // Store initial selection in our Set
     selectedRoles[settingKey] = new Set(selectedRoleIds);
 
-    // Update tags displayed in the selected box
     function refreshSelectedTags() {
-      // Remove all tags except arrow
-      [...selectedBox.querySelectorAll(".tag")].forEach(tag => tag.remove());
+      [...selectedBox.querySelectorAll(".tag")].forEach((tag) => tag.remove());
 
       if (selectedRoles[settingKey].size === 0) {
         const placeholder = document.createElement("span");
@@ -721,18 +748,18 @@ async function updateSettings(guildId, key, value) {
         return;
       }
 
-      selectedRoles[settingKey].forEach(roleId => {
-        const role = cachedRoles.find(r => r.id === roleId);
+      selectedRoles[settingKey].forEach((roleId) => {
+        const role = cachedRoles.find((r) => r.id === roleId);
         if (!role) return;
 
         const tag = document.createElement("span");
         tag.className = "tag";
-        tag.style.setProperty("--role-color", role.color || '#00bcd4');
+        tag.style.setProperty("--role-color", role.color || "#00bcd4");
 
         const dot = document.createElement("span");
         dot.className = "color-dot";
-        dot.style.backgroundColor = role.color || '#00bcd4';
-        dot.style.boxShadow = `0 0 6px ${role.color || '#00bcd4'}`;
+        dot.style.backgroundColor = role.color || "#00bcd4";
+        dot.style.boxShadow = `0 0 6px ${role.color || "#00bcd4"}`;
 
         const text = document.createElement("span");
         text.textContent = role.name;
@@ -744,6 +771,14 @@ async function updateSettings(guildId, key, value) {
       });
     }
 
+    async function saveRolesSetting(key, rolesArray) {
+      try {
+        await updateSettings(getGuildIdFromURL(), key, rolesArray);
+      } catch {
+        alert("Failed to update roles.");
+      }
+    }
+
     function updateSelectedRoles(key, checked, roleId) {
       if (checked) {
         selectedRoles[key].add(roleId);
@@ -751,17 +786,7 @@ async function updateSettings(guildId, key, value) {
         selectedRoles[key].delete(roleId);
       }
       refreshSelectedTags();
-
-      // Save updated role list to backend
       saveRolesSetting(key, Array.from(selectedRoles[key]));
-    }
-
-    async function saveRolesSetting(key, rolesArray) {
-      try {
-        await updateSettings("1349410870685470802", key, rolesArray);
-      } catch {
-        alert("Failed to update roles.");
-      }
     }
 
     refreshSelectedTags();
@@ -771,19 +796,18 @@ async function updateSettings(guildId, key, value) {
     container.appendChild(card);
   }
 
-  // Initial load: optionally open first section and first item
+  // Initial load: open first section and first item
   (function init() {
-    // Show first section
     const firstSection = document.querySelector("nav.sidebar .section");
     if (firstSection) {
-      firstSection.querySelector("ul").style.display = "block";
-      // Select first li
-      const firstLi = firstSection.querySelector("li");
-      if (firstLi) {
-        firstLi.click();
-      }
+      const ul = firstSection.querySelector("ul");
+      if (ul) ul.style.display = "block";
+
+      const firstLi = ul?.querySelector("li");
+      if (firstLi) firstLi.click();
     }
   })();
 </script>
+
 </body>
 </html>
