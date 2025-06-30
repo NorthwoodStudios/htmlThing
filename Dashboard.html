@@ -500,7 +500,7 @@ function getGuildIdFromURL() {
 
 async function updateSettings(key, value) {
   const guildId = getGuildIdFromURL();
-  const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings?guild=${guildId}`;
+  const url = `https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_setting?guild=${guildId}`;
   
   const res = await fetch(url, {
     method: 'POST',
