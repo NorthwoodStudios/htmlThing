@@ -749,6 +749,93 @@
     card.appendChild(dropdown);
     container.appendChild(card);
   }
+
+  <script>
+  function buildSidebar() {
+    const sidebar = document.querySelector("nav.sidebar");
+    sidebar.innerHTML = ""; // clear existing content
+
+    const categories = {
+      "Bot Settings": ["bot_status", "prefix"],
+      "Roles": ["staff_roles", "management_roles"],
+      "Limits": ["quota", "types"],
+      "Logs": ["main_logs", "shift_logs", "punishment_logs", "log_bans", "command_logs", "server_logs"],
+      "Advanced": ["reset", "more_later"]
+    };
+
+    Object.entries(categories).forEach(([categoryName, keys]) => {
+      const h3 = document.createElement("h3");
+      h3.textContent = categoryName;
+
+      const ul = document.createElement("ul");
+      keys.forEach((key) => {
+        const li = document.createElement("li");
+        li.setAttribute("data-key", key);
+        li.textContent = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        ul.appendChild(li);
+      });
+
+      sidebar.appendChild(h3);
+      sidebar.appendChild(ul);
+    });
+
+    // Re-attach sidebar click listeners after building
+    setupSidebarListeners();
+  }
+
+  function setupSidebarListeners() {
+    const sidebarItems = document.querySelectorAll("nav.sidebar li");
+
+    sidebarItems.forEach((li) => {
+      li.addEventListener("click", async () => {
+        const key = li.getAttribute("data-key");
+        if (!key) return;
+
+        sidebarItems.forEach((i) => i.classList.remove("active"));
+        li.classList.add("active");
+        currentSetting = key;
+        document.getElementById("section-title").textContent = li.textContent;
+
+        const guildId = getGuildIdFromURL();
+        if (!guildId) {
+          document.getElementById("settings-container").textContent = "Guild ID missing from URL.";
+          return;
+        }
+
+        try {
+          if ((key === "staff_roles" || key === "management_roles") && cachedRoles.length === 0) {
+            await fetchRoles(guildId);
+          }
+
+          const settings = await fetchSettings(guildId);
+          renderSetting(key, settings[key]);
+        } catch (e) {
+          console.error(e);
+          document.getElementById("settings-container").textContent = "Failed to load setting.";
+        }
+      });
+    });
+
+    // Add toggle logic back for expanding/collapsing sections
+    document.querySelectorAll("nav.sidebar h3").forEach((h3) => {
+      const ul = h3.nextElementSibling;
+      if (ul && ul.tagName === "UL") {
+        ul.style.display = "none";
+        h3.style.cursor = "pointer";
+        h3.addEventListener("click", () => toggleSection(h3));
+        h3.setAttribute("tabindex", "0");
+        h3.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggleSection(h3);
+          }
+        });
+      }
+    });
+  }
+
+  // Call this once the page loads
+  document.addEventListener("DOMContentLoaded", buildSidebar);
 </script>
 
 
