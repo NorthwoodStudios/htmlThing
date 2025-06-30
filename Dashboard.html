@@ -477,8 +477,7 @@
 
   // Load roles from backend (dummy function - replace URL)
   async function fetchRoles(guildId) {
-    // Simulate fetch: replace this with your real fetch('/get_roles?guild=...')
-    const res = await fetch(`/get_roles?guild=${guildId}`);
+    const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_roles?guild=${guildId}`);
     if (!res.ok) throw new Error("Failed to fetch roles");
     const roles = await res.json();
     cachedRoles = roles;
@@ -487,7 +486,7 @@
 
   // Load settings from backend (dummy function - replace URL)
   async function fetchSettings(guildId) {
-    const res = await fetch(`/get_settings?guild=${guildId}`);
+    const res = await fetch(`https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/get_settings?guild=${guildId}`);
     if (!res.ok) throw new Error("Failed to fetch settings");
     const settings = await res.json();
     return settings;
@@ -495,7 +494,7 @@
 
   // Update settings to backend (dummy function - replace URL)
   async function updateSettings(guildId, key, value) {
-    const res = await fetch('/update_settings', {
+    const res = await fetch('https://7a2d6734-4cb7-4aa8-b495-7264d7fca21c-00-1idxr1hkn6v2d.janeway.replit.dev:8080/update_settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guild: guildId, key, value })
