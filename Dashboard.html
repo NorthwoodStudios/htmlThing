@@ -5,36 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Horizon Bot - Bot Settings</title>
   <style>
-   body {
-  margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0e1015;
-  color: #f4f4f4;
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0e1015;
+      color: #f4f4f4;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-nav.Nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+    nav.Nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      z-index: 100;
+      background: #1c1f26;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      backdrop-filter: blur(12px);
+    }
 
-  height: 60px;
-  z-index: 100;
-  background: #1c1f26;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  backdrop-filter: blur(12px);
-}
     .settings-title {
-  margin-top: 30px; /* Adjust as needed */
-}
-
+      margin-top: 30px; /* Adjust as needed */
+    }
 
     .back-btn {
       font-size: 26px;
@@ -68,6 +67,8 @@ nav.Nav {
       display: flex;
       flex-direction: column;
       padding: 20px 15px;
+      margin-top: 60px;           /* pushed below navbar */
+      height: calc(100vh - 60px); /* full height minus navbar */
       overflow-y: auto;
       flex-shrink: 0;
     }
@@ -136,7 +137,8 @@ nav.Nav {
       overflow-y: auto;
       padding: 30px 20px;
       max-width: 900px;
-      margin: 0 auto;
+      margin: 60px auto 0 auto;   /* pushed below navbar */
+      height: calc(100vh - 60px);
     }
 
     main.content h1 {
@@ -207,6 +209,8 @@ nav.Nav {
         flex-direction: row;
         overflow-x: auto;
         padding: 10px;
+        margin-top: 60px; /* keep pushing below navbar */
+        height: auto;
       }
       nav.sidebar .section {
         margin-right: 30px;
@@ -225,9 +229,9 @@ nav.Nav {
         max-width: 100%;
         margin: 20px 0 50px 0;
         padding: 20px 10px;
+        height: auto;
       }
     }
-
   </style>
 </head>
 <body>
